@@ -37,3 +37,15 @@ export const POST = withUser(async (req, user) => {
 
   return ok(rows[0], 201);
 });
+
+export const DELETE = withUser(async (req, user) => {
+  const { comment_id } = await req.json();
+  if (!comment_id) return err('comment_id required');
+
+  const comment = await sql`SELECT user_id FROM comments WHERE id = ${comment_id}`;
+  if (comment.length === 0) return err('Comment not found', 404);
+  if (comment[0].user_id !== user.id) return err('Not your comment', 403);
+
+  await sql`DELETE FROM comments WHERE id = ${comment_id}`;
+  return ok({ deleted: true });
+});
