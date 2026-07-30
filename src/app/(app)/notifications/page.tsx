@@ -1,0 +1,45 @@
+'use client';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+
+export default function NotificationsPage() {
+  const [notifs, setNotifs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/notifications').then(r => r.json()).then(d => {
+      if (d.data) setNotifs(d.data.notifications);
+      setLoading(false);
+    });
+    fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) });
+  }, []);
+
+  if (loading) return <div className="text-center text-zinc-500 py-8">Loading...</div>;
+
+  return (
+    <div>
+      <h1 className="text-lg font-bold text-white mb-4">Notifications</h1>
+      {notifs.length === 0 ? (
+        <div className="text-center text-zinc-600 py-16 text-sm">No notifications yet</div>
+      ) : (
+        <div className="space-y-2">
+          {notifs.map(n => (
+            <div key={n.id} className={`bg-zinc-900 border ${n.read ? 'border-zinc-800' : 'border-blue-800'} rounded-xl p-4`}>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold shrink-0">
+                  {n.display_name?.[0]?.toUpperCase()}
+                </div>
+                <div className="text-sm text-zinc-300">
+                  <Link href={`/profile/${n.username}`} className="text-white font-medium hover:underline">{n.display_name}</Link>
+                  {n.type === 'like' && <> liked your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
+                  {n.type === 'comment' && <> commented on your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
+                  {n.type === 'follow' && <> followed you</>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
