@@ -15,9 +15,11 @@ export const POST = withUser(async (req, user) => {
   const existing = await sql`SELECT 1 FROM follows WHERE follower_id = ${user.id} AND following_id = ${following_id}`;
   if (existing.length > 0) {
     await sql`DELETE FROM follows WHERE follower_id = ${user.id} AND following_id = ${following_id}`;
+    await sql`UPDATE profiles SET points = GREATEST(0, points - 10) WHERE id = ${following_id}`;
     return ok({ following: false });
   }
 
   await sql`INSERT INTO follows (follower_id, following_id) VALUES (${user.id}, ${following_id})`;
+  await sql`UPDATE profiles SET points = points + 10 WHERE id = ${following_id}`;
   return ok({ following: true }, 201);
 });
