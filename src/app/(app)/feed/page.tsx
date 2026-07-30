@@ -9,6 +9,13 @@ export default function FeedPage() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      if (d.data?.id) setCurrentUserId(d.data.id);
+    });
+  }, []);
 
   async function loadPosts(reset = false) {
     try {
@@ -25,7 +32,7 @@ export default function FeedPage() {
         setError(d.error || 'Failed to load posts');
       }
     } catch {
-      setError('Network error');
+      setError('Failed to connect. Check your internet and try again.');
     } finally {
       setLoading(false);
     }
@@ -56,7 +63,7 @@ export default function FeedPage() {
         </div>
       ) : (
         <>
-          {posts.map(p => <PostCard key={p.id} post={p} onUpdate={() => loadPosts(true)} />)}
+          {posts.map(p => <PostCard key={p.id} post={p} currentUserId={currentUserId} onUpdate={() => loadPosts(true)} />)}
           {hasMore && (
             <button
               onClick={() => loadPosts()}
