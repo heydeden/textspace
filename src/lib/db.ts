@@ -1,13 +1,21 @@
 import { neon } from '@neondatabase/serverless';
 
-const url = () => { const u = process.env.DATABASE_URL; if (!u) throw new Error('DATABASE_URL not set'); return u; };
+function getDb() {
+  const u = process.env.DATABASE_URL;
+  if (!u) throw new Error('DATABASE_URL not set');
+  return neon(u);
+}
 
-export function sql(q: TemplateStringsArray | string, ...values: any[]) {
-  return neon(url())(q as any, ...values);
+export function sql(strings: TemplateStringsArray, ...values: any[]) {
+  return getDb()(strings, ...values);
+}
+
+export function query(text: string, params?: any[]) {
+  return getDb()(text, params || []);
 }
 
 export async function initDB() {
-  const db = neon(url());
+  const db = getDb();
   await db`CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(30) UNIQUE NOT NULL,
