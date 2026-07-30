@@ -4,7 +4,7 @@ import { useState } from 'react';
 interface Comment {
   id: string; content: string; created_at: string;
   parent_id: string | null;
-  user_id: string; username: string; display_name: string;
+  user_id: string; username: string; display_name: string; role?: string;
 }
 
 export default function CommentSection({ postId, currentUserId }: { postId: string; currentUserId?: string }) {
@@ -69,6 +69,8 @@ export default function CommentSection({ postId, currentUserId }: { postId: stri
             <div className="flex items-center gap-1.5 mb-1">
               <span className="font-medium text-sm text-white">{c.display_name}</span>
               <span className="text-zinc-500 text-xs">@{c.username}</span>
+              {c.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
+              {c.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
             </div>
             {currentUserId === c.user_id && (
               <button onClick={() => handleDelete(c.id)} className="text-zinc-600 hover:text-red-400 text-xs">Delete</button>
