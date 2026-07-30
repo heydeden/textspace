@@ -9,10 +9,14 @@ export default function PostPage() {
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentUserId, setCurrentUserId] = useState('');
 
   useEffect(() => {
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      if (d.data?.id) setCurrentUserId(d.data.id);
+    });
     async function fetchPost() {
-      const res = await fetch(`/api/posts?limit=1`);
+      const res = await fetch(`/api/posts?limit=20`);
       if (res.ok) {
         const d = await res.json();
         const found = d.data.posts.find((p: any) => p.id === id);
@@ -30,10 +34,10 @@ export default function PostPage() {
 
   return (
     <div>
-      <PostCard post={post} />
+      <PostCard post={post} currentUserId={currentUserId} />
       <div className="border border-zinc-800 rounded-xl p-4 mt-2">
         <h3 className="text-sm font-medium text-zinc-400 mb-3">Comments</h3>
-        <CommentSection postId={id} />
+        <CommentSection postId={id} currentUserId={currentUserId} />
       </div>
     </div>
   );
