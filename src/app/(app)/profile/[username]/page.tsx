@@ -115,14 +115,15 @@ export default function ProfilePage() {
             Edit Profile
           </button>
         ) : (
-          <button
-            onClick={toggleFollow}
-            className={`mt-4 px-6 py-2 rounded-full text-sm font-medium transition ${
-              following ? 'border border-zinc-700 text-white hover:border-red-500 hover:text-red-400' : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {following ? 'Following' : 'Follow'}
-          </button>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <button onClick={toggleFollow}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition ${
+                following ? 'border border-zinc-700 text-white hover:border-red-500 hover:text-red-400' : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >{following ? 'Following' : 'Follow'}</button>
+            <button onClick={() => router.push(`/messages/${profile?.id || currentUserId}`)}
+              className="px-4 py-2 rounded-full text-sm font-medium border border-zinc-700 text-zinc-300 hover:border-zinc-500 transition">Message</button>
+          </div>
         )}
       </div>
 
