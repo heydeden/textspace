@@ -121,7 +121,7 @@ export default function ProfilePage() {
                 following ? 'border border-zinc-700 text-white hover:border-red-500 hover:text-red-400' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
             >{following ? 'Following' : 'Follow'}</button>
-            <button onClick={() => router.push(`/messages/${profile?.id || currentUserId}`)}
+            <button onClick={() => profile?.id && router.push(`/messages/${profile.id}`)}
               className="px-4 py-2 rounded-full text-sm font-medium border border-zinc-700 text-zinc-300 hover:border-zinc-500 transition">Message</button>
           </div>
         )}
