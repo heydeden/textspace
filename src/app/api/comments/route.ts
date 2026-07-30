@@ -7,7 +7,7 @@ export const GET = async (req: Request) => {
   const post_id = url.searchParams.get('post_id');
   if (!post_id) return err('post_id required');
 
-  const { rows } = await sql`
+  const rows = await sql`
     SELECT c.id, c.content, c.created_at, c.parent_id,
       u.id as user_id, u.username, u.display_name
     FROM comments c
@@ -23,7 +23,7 @@ export const POST = withUser(async (req, user) => {
   if (!post_id || !content) return err('post_id and content required');
   if (content.length > 200) return err('Max 200 characters');
 
-  const { rows } = await sql`
+  const rows = await sql`
     INSERT INTO comments (post_id, user_id, content, parent_id)
     VALUES (${post_id}, ${user.id}, ${content}, ${parent_id || null})
     RETURNING id, content, created_at, parent_id
