@@ -16,9 +16,7 @@ export const GET = withAdmin(async (req) => {
     params.push(`%${q}%`);
   }
 
-  const countResult = await query(
-    `SELECT COUNT(*)::int as count FROM profiles ${where}`, params
-  );
+  const countResult = await query(`SELECT COUNT(*)::int as count FROM profiles ${where}`, params);
   const total = countResult[0].count;
 
   params.push(limit, offset);
@@ -28,13 +26,13 @@ export const GET = withAdmin(async (req) => {
      FROM profiles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
   );
-
   return ok({ users: rows, total, page, limit, pages: Math.ceil(total / limit) });
 });
 
-export const PATCH = withAdmin(async (req) => {
+export const PATCH = withAdmin(async (req, user) => {
   const { user_id, role, banned } = await req.json();
   if (!user_id) return err('user_id required');
+  if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
 
   const updates: string[] = [];
   const params: any[] = [];
@@ -46,23 +44,21 @@ export const PATCH = withAdmin(async (req) => {
     params.push(role);
   }
   if (banned !== undefined) {
+    if (user_id === user.id) return err('Cannot ban yourself', 403);
     updates.push(`banned = $${idx++}`);
     params.push(banned);
   }
 
   if (updates.length === 0) return err('Nothing to update');
-
   params.push(user_id);
-  await query(
-    `UPDATE profiles SET ${updates.join(', ')} WHERE id = $${idx}`,
-    params
-  );
+  await query(`UPDATE profiles SET ${updates.join(', ')} WHERE id = $${idx}`, params);
   return ok({ updated: true });
 });
 
-export const DELETE = withAdmin(async (req) => {
+export const DELETE = withAdmin(async (req, user) => {
   const { user_id } = await req.json();
   if (!user_id) return err('user_id required');
+  if (user_id === user.id) return err('Cannot delete yourself', 403);
 
   await query('DELETE FROM profiles WHERE id = $1', [user_id]);
   return ok({ deleted: true });
