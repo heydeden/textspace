@@ -6,7 +6,7 @@ export async function GET() {
   const user = getSession();
   if (!user) return err('Not logged in', 401);
 
-  const { rows } = await sql`
+  const rows = await sql`
     SELECT id, username, display_name, bio, created_at FROM profiles WHERE id = ${user.id}
   `;
   if (rows.length === 0) { clearSession(); return err('User not found', 404); }
