@@ -6,6 +6,7 @@ export default function Navbar({ username }: { username?: string }) {
   const [role, setRole] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [msgUnread, setMsgUnread] = useState(0);
 
   useEffect(() => {
     if (!username) return;
@@ -19,6 +20,9 @@ export default function Navbar({ username }: { username?: string }) {
     const interval = setInterval(() => {
       fetch('/api/notifications?unread=true').then(r => r.json()).then(d => {
         if (d.data?.unread !== undefined) setUnread(d.data.unread);
+      });
+      fetch('/api/messages').then(r => r.json()).then(d => {
+        if (d.data?.unread !== undefined) setMsgUnread(d.data.unread);
       });
     }, 15000);
     return () => clearInterval(interval);
@@ -42,7 +46,7 @@ export default function Navbar({ username }: { username?: string }) {
           {username ? (
             <button onClick={() => setMenuOpen(true)} className="flex flex-col items-center justify-center text-zinc-500 hover:text-white text-[10px] gap-0.5 transition relative">
               <span className="text-lg">☰</span><span>Menu</span>
-              {unread > 0 && <span className="absolute top-0 right-3 w-2 h-2 bg-red-500 rounded-full" />}
+              {(unread + msgUnread) > 0 && <span className="absolute -top-0.5 right-1 text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded-full leading-none">{unread + msgUnread}</span>}
             </button>
           ) : (
             <Link href="/" className="flex flex-col items-center justify-center text-zinc-500 hover:text-white text-[10px] gap-0.5 transition">
