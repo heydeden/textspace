@@ -9,7 +9,7 @@ export const GET = async (req: Request) => {
 
   const rows = await sql`
     SELECT c.id, c.content, c.created_at, c.parent_id,
-      u.id as user_id, u.username, u.display_name
+      u.id as user_id, u.username, u.display_name, u.role
     FROM comments c
     JOIN profiles u ON c.user_id = u.id
     WHERE c.post_id = ${post_id}
