@@ -1,0 +1,34 @@
+import { sql, query } from '@/lib/db';
+import { ok, err } from '@/lib/api';
+import { withUser } from '@/lib/api';
+
+export const GET = withUser(async (req, user) => {
+  // Get all conversations for this user (last message per other user)
+  const rows = await query(`
+    SELECT DISTINCT ON (other_id)
+      other_id as user_id, other.username, other.display_name,
+      m.content as last_message, m.created_at as last_message_at
+    FROM (
+      SELECT CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END as other_id,
+        id, content, created_at
+      FROM messages WHERE sender_id = $1 OR receiver_id = $1
+    ) m
+    JOIN profiles other ON m.other_id = other.id
+    ORDER BY other_id, m.created_at DESC
+    LIMIT 50
+  `, [user.id]);
+  return ok({ conversations: rows });
+});
+
+export const POST = withUser(async (req, user) => {
+  const { receiver_id, content } = await req.json();
+  if (!receiver_id || !content) return err('receiver_id and content required');
+  if (content.length > 500) return err('Max 500 characters');
+
+  const rows = await sql`
+    INSERT INTO messages (sender_id, receiver_id, content)
+    VALUES (${user.id}, ${receiver_id}, ${content})
+    RETURNING id, content, created_at
+  `;
+  return ok(rows[0], 201);
+});
