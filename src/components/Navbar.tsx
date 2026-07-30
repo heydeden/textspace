@@ -20,6 +20,7 @@ export default function Navbar({ username }: { username?: string }) {
           {username ? (
             <>
               <Link href={`/profile/${username}`} className="text-zinc-400 hover:text-white">Profile</Link>
+              <Link href="/settings" className="text-zinc-500 hover:text-white">⚙</Link>
               <button onClick={async () => {
                 await fetch('/api/auth/me', { method: 'DELETE' });
                 window.location.href = '/';
