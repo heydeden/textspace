@@ -1,78 +1,51 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
 import PostForm from '@/components/PostForm';
 
 export default function FeedPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [error, setError] = useState('');
-  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [tab, setTab] = useState<'latest' | 'trending'>('latest');
+  const [currentUserId, setCurrentUserId] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
-      if (d.data?.id) setCurrentUserId(d.data.id);
+      if (d.data?.id) setCurrentUserId(d.data.id); else router.push('/');
     });
   }, []);
 
-  async function loadPosts(reset = false) {
-    try {
-      const params = new URLSearchParams({ limit: '20' });
-      if (!reset && cursor) params.set('cursor', cursor);
-      const res = await fetch(`/api/posts?${params}`);
-      const d = await res.json();
-      if (res.ok) {
-        setPosts(prev => reset ? d.data.posts : [...prev, ...d.data.posts]);
-        setCursor(d.data.cursor);
-        setHasMore(d.data.has_more);
-        setError('');
-      } else {
-        setError(d.error || 'Failed to load posts');
-      }
-    } catch {
-      setError('Failed to connect. Check your internet and try again.');
-    } finally {
-      setLoading(false);
-    }
+  async function loadPosts() {
+    setLoading(true);
+    const endpoint = tab === 'trending' ? '/api/trending' : '/api/posts';
+    const res = await fetch(endpoint);
+    const d = await res.json();
+    if (d.data) setPosts(d.data.posts || d.data.posts);
+    setLoading(false);
   }
 
-  useEffect(() => { loadPosts(true); }, []);
+  useEffect(() => { loadPosts(); }, [tab]);
 
   return (
     <div>
-      <PostForm onPost={() => loadPosts(true)} />
+      <div className="flex border-b border-zinc-800 mb-4">
+        <button onClick={() => setTab('latest')} className={`flex-1 pb-3 text-sm font-medium transition ${tab === 'latest' ? 'text-white border-b-2 border-blue-500' : 'text-zinc-500'}`}>Latest</button>
+        <button onClick={() => setTab('trending')} className={`flex-1 pb-3 text-sm font-medium transition ${tab === 'trending' ? 'text-white border-b-2 border-blue-500' : 'text-zinc-500'}`}>Trending 🔥</button>
+      </div>
+
+      {tab === 'latest' && <PostForm onPost={() => loadPosts()} />}
+
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 text-zinc-500">
+        <div className="flex flex-col items-center py-16 text-zinc-500">
           <div className="animate-spin w-6 h-6 border-2 border-zinc-600 border-t-blue-500 rounded-full mb-3" />
-          <span className="text-sm">Loading posts...</span>
-        </div>
-      ) : error ? (
-        <div className="text-center py-16">
-          <p className="text-zinc-400 text-sm mb-2">{error}</p>
-          <button onClick={() => { setLoading(true); loadPosts(true); }} className="text-blue-500 text-sm hover:underline">
-            Try again
-          </button>
+          <span className="text-sm">Loading...</span>
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-16 border border-dashed border-zinc-800 rounded-xl">
-          <p className="text-2xl mb-2">📝</p>
-          <p className="text-zinc-400 font-medium">No posts yet</p>
-          <p className="text-zinc-600 text-sm mt-1">Type something above and be the first!</p>
-        </div>
+        <div className="text-center text-zinc-600 py-16 text-sm">No posts</div>
       ) : (
-        <>
-          {posts.map(p => <PostCard key={p.id} post={p} currentUserId={currentUserId} onUpdate={() => loadPosts(true)} />)}
-          {hasMore && (
-            <button
-              onClick={() => loadPosts()}
-              className="w-full text-blue-500 text-sm py-4 hover:underline"
-            >
-              Load more
-            </button>
-          )}
-        </>
+        posts.map(p => <PostCard key={p.id} post={p} currentUserId={currentUserId} onUpdate={() => loadPosts()} />)
       )}
     </div>
   );
