@@ -1,5 +1,5 @@
 import { sql } from '@/lib/db';
-import { hashPassword, setSession } from '@/lib/auth';
+import { hashPassword, setSession, type UserPayload } from '@/lib/auth';
 import { ok, err } from '@/lib/api';
 
 export async function POST(req: Request) {
@@ -13,11 +13,12 @@ export async function POST(req: Request) {
     if (existing.length > 0) return err('Username taken', 409);
 
     const password_hash = await hashPassword(password);
-    const user = (await sql`
+    const rows = await sql`
       INSERT INTO profiles (username, display_name, password_hash)
       VALUES (${username}, ${display_name}, ${password_hash})
       RETURNING id, username, display_name
-    `)[0];
+    `;
+    const user = rows[0] as unknown as UserPayload;
     setSession(user);
     return ok(user, 201);
   } catch (e) { return err('Registration failed', 500); }
