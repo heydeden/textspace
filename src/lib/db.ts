@@ -22,6 +22,8 @@ export async function initDB() {
     display_name VARCHAR(50) NOT NULL,
     password_hash TEXT NOT NULL,
     bio TEXT DEFAULT '',
+    role VARCHAR(20) DEFAULT 'user',
+    points INT DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
   await db`CREATE TABLE IF NOT EXISTS posts (
@@ -50,4 +52,15 @@ export async function initDB() {
     created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (follower_id, following_id)
   )`;
+  await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`;
+  await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS points INT DEFAULT 0`;
+
+  // Ensure admin user exists (first user becomes admin)
+  const adminCheck = await db`SELECT COUNT(*) as cnt FROM profiles`;
+  if (adminCheck.length > 0 && parseInt(adminCheck[0].cnt) === 1) {
+    const firstUser = await db`SELECT id FROM profiles ORDER BY created_at ASC LIMIT 1`;
+    if (firstUser.length > 0) {
+      await db`UPDATE profiles SET role = 'admin' WHERE id = ${firstUser[0].id} AND role = 'user'`;
+    }
+  }
 }
