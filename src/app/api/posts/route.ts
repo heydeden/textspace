@@ -16,11 +16,14 @@ export const GET = withUser(async (req, user) => {
     JOIN profiles u ON p.user_id = u.id
   `;
   const params: any[] = [user.id];
+  const conditions: string[] = ['u.banned = false'];
 
   if (username) {
-    sqlStr += ` WHERE u.username = $2`;
+    conditions.push(`u.username = $${params.length + 1}`);
     params.push(username);
   }
+
+  sqlStr += ` WHERE ${conditions.join(' AND ')}`;
 
   sqlStr += ` ORDER BY p.created_at DESC LIMIT 21`;
 
