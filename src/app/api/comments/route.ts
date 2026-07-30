@@ -29,10 +29,10 @@ export const POST = withUser(async (req, user) => {
     RETURNING id, content, created_at, parent_id
   `;
 
-  // +3 points to post author for getting a comment
   const post = await sql`SELECT user_id FROM posts WHERE id = ${post_id}`;
   if (post.length > 0 && post[0].user_id !== user.id) {
     await sql`UPDATE profiles SET points = points + 3 WHERE id = ${post[0].user_id}`;
+    await sql`INSERT INTO notifications (user_id, actor_id, type, post_id) VALUES (${post[0].user_id}, ${user.id}, 'comment', ${post_id})`;
   }
 
   return ok(rows[0], 201);
