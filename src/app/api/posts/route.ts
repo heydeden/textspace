@@ -1,4 +1,4 @@
-import { sql } from '@/lib/db';
+import { query, sql } from '@/lib/db';
 import { ok, err } from '@/lib/api';
 import { withUser } from '@/lib/api';
 
@@ -6,7 +6,7 @@ export const GET = withUser(async (req, user) => {
   const url = new URL(req.url);
   const username = url.searchParams.get('username');
 
-  let queryStr = `
+  let sqlStr = `
     SELECT p.id, p.content, p.created_at,
       u.id as user_id, u.username, u.display_name,
       (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
@@ -18,13 +18,13 @@ export const GET = withUser(async (req, user) => {
   const params: any[] = [user.id];
 
   if (username) {
-    queryStr += ` WHERE u.username = $2`;
+    sqlStr += ` WHERE u.username = $2`;
     params.push(username);
   }
 
-  queryStr += ` ORDER BY p.created_at DESC LIMIT 21`;
+  sqlStr += ` ORDER BY p.created_at DESC LIMIT 21`;
 
-  const rows = await sql(queryStr, ...params);
+  const rows = await query(sqlStr, params);
   const has_more = rows.length > 21;
   if (has_more) rows.pop();
 
