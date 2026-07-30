@@ -40,5 +40,23 @@ export const POST = withUser(async (req, user) => {
     INSERT INTO posts (user_id, content) VALUES (${user.id}, ${content})
     RETURNING id, content, created_at
   `;
+
+  // +5 points for posting
+  await sql`UPDATE profiles SET points = points + 5 WHERE id = ${user.id}`;
+
   return ok(rows[0], 201);
+});
+
+export const DELETE = withUser(async (req, user) => {
+  const { post_id } = await req.json();
+  if (!post_id) return err('post_id required');
+
+  const post = await sql`SELECT user_id FROM posts WHERE id = ${post_id}`;
+  if (post.length === 0) return err('Post not found', 404);
+  if (post[0].user_id !== user.id) return err('Not your post', 403);
+
+  await sql`DELETE FROM posts WHERE id = ${post_id}`;
+  await sql`UPDATE profiles SET points = GREATEST(0, points - 5) WHERE id = ${user.id}`;
+
+  return ok({ deleted: true });
 });
