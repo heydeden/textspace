@@ -18,11 +18,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div>
-      <div className="flex gap-4 mb-6 border-b border-zinc-800 pb-4 text-sm">
-        <span className="text-white font-bold">Admin</span>
-        <Link href="/admin" className="text-zinc-500 hover:text-white">Dashboard</Link>
-        <Link href="/admin/users" className="text-zinc-500 hover:text-white">Users</Link>
-        <Link href="/admin/posts" className="text-zinc-500 hover:text-white">Posts</Link>
+      <div className="flex gap-4 mb-6 border-b border-zinc-800 pb-4 text-sm overflow-x-auto">
+        <span className="text-white font-bold shrink-0">Admin</span>
+        <Link href="/admin" className="text-zinc-500 hover:text-white shrink-0">Dashboard</Link>
+        <Link href="/admin/users" className="text-zinc-500 hover:text-white shrink-0">Users</Link>
+        <Link href="/admin/posts" className="text-zinc-500 hover:text-white shrink-0">Posts</Link>
+        <Link href="/admin/reports" className="text-zinc-500 hover:text-white shrink-0">Reports</Link>
       </div>
       {children}
     </div>
