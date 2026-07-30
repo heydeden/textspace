@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     const { username, password } = await req.json();
     if (!username || !password) return err('Username and password required');
 
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT id, username, display_name, password_hash FROM profiles WHERE username = ${username}
     `;
     if (rows.length === 0) return err('Invalid credentials', 401);
