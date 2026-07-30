@@ -6,7 +6,7 @@ export const GET = withUser(async (req, user) => {
   // Get all conversations for this user (last message per other user)
   const rows = await query(`
     SELECT DISTINCT ON (other_id)
-      other_id as user_id, other.username, other.display_name,
+      other_id as user_id, other.username, other.display_name, other.role,
       m.content as last_message, m.created_at as last_message_at
     FROM (
       SELECT CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END as other_id,
@@ -17,7 +17,13 @@ export const GET = withUser(async (req, user) => {
     ORDER BY other_id, m.created_at DESC
     LIMIT 50
   `, [user.id]);
-  return ok({ conversations: rows });
+
+  const unreadResult = await query(
+    `SELECT COUNT(*)::int as count FROM messages WHERE receiver_id = $1 AND read = false`,
+    [user.id]
+  );
+
+  return ok({ conversations: rows, unread: unreadResult[0].count });
 });
 
 export const POST = withUser(async (req, user) => {
