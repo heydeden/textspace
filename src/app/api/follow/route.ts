@@ -21,5 +21,6 @@ export const POST = withUser(async (req, user) => {
 
   await sql`INSERT INTO follows (follower_id, following_id) VALUES (${user.id}, ${following_id})`;
   await sql`UPDATE profiles SET points = points + 10 WHERE id = ${following_id}`;
+  await sql`INSERT INTO notifications (user_id, actor_id, type) VALUES (${following_id}, ${user.id}, 'follow')`;
   return ok({ following: true }, 201);
 });
