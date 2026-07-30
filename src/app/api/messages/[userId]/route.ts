@@ -14,7 +14,10 @@ export const GET = withUser(async (req, user) => {
     ORDER BY m.created_at ASC LIMIT 100
   `, [user.id, userId]);
 
-  const other = await sql`SELECT id, username, display_name FROM profiles WHERE id = ${userId}`;
+  const other = await sql`SELECT id, username, display_name, role FROM profiles WHERE id = ${userId}`;
+
+  // Mark incoming messages as read
+  await sql`UPDATE messages SET read = true WHERE receiver_id = ${user.id} AND sender_id = ${userId} AND read = false`;
   if (other.length === 0) return err('User not found', 404);
 
   return ok({ messages: rows, other: other[0] });
