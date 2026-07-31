@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import PtsBadge from './PtsBadge';
+import ConfirmModal from './ConfirmModal';
+import { formatCount } from '@/lib/format';
 
 interface Post {
   id: string; content: string; created_at: string;
@@ -22,8 +24,10 @@ function renderContent(content: string) {
 export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { post: Post; currentUserId?: string; onUpdate?: () => void; onDelete?: (id: string) => void }) {
   const [liked, setLiked] = useState(post.liked_by_me);
   const [likeCount, setLikeCount] = useState(post.like_count);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [reportReason, setReportReason] = useState('');
+  const [showDelete, setShowDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
@@ -46,20 +50,28 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
       body: JSON.stringify({ post_id: post.id, content: editContent }),
     });
     setEditSaving(false);
-    if (res.ok) { setEditing(false); onUpdate?.(); }
+    if (res.ok) { setEditing(false); setMenuOpen(false); onUpdate?.(); }
   }
 
   async function handleDelete() {
-    if (!confirm('Delete this post?')) return;
     setDeleting(true);
     const res = await fetch('/api/posts', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post_id: post.id }) });
-    if (res.ok) { onDelete?.(post.id); onUpdate?.(); } else setDeleting(false);
+    if (res.ok) { onDelete?.(post.id); onUpdate?.(); } else { setDeleting(false); setShowDelete(false); }
   }
 
   async function handleReport(e: React.FormEvent) {
     e.preventDefault();
     await fetch('/api/reports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post_id: post.id, reason: reportReason }) });
-    setShowReport(false); setReportReason('');
+    setShowReport(false); setReportReason(''); setMenuOpen(false);
+  }
+
+  async function copyText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setMenuOpen(false);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
   }
 
   async function handleShare() {
@@ -77,13 +89,31 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
           <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">{post.display_name[0]?.toUpperCase()}</div>
           <div><span className="font-medium text-sm text-white">{post.display_name}</span><span className="text-zinc-500 text-xs ml-2">@{post.username}</span>{post.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 ml-1 px-1.5 py-0.5 rounded-full">Admin</span>}{post.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 ml-1 px-1.5 py-0.5 rounded-full">Mod</span>}<PtsBadge pts={post.points} /></div>
         </Link>
-        {isOwn ? (
-          <div className="flex items-center gap-1">
-            {isEditable && !editing && <button onClick={() => setEditing(true)} className="text-zinc-600 hover:text-blue-400 text-xs px-2 py-1 rounded">Edit</button>}
-            <button onClick={handleDelete} disabled={deleting} className="text-zinc-600 hover:text-red-400 text-xs px-2 py-1 rounded">{deleting ? '...' : 'Delete'}</button>
+        {currentUserId && (
+          <div className="relative">
+            <button onClick={() => setMenuOpen(o => !o)} className="text-zinc-600 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition">⋯</button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-full z-40 mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
+                  {isOwn ? (
+                    <>
+                      {isEditable && !editing && (
+                        <button onClick={() => { setEditing(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit</button>
+                      )}
+                      <button onClick={() => copyText(post.content)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Copy text</button>
+                      <button onClick={() => { setShowDelete(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Delete</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => copyText(post.content)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Copy text</button>
+                      <button onClick={() => { setShowReport(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Report</button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-        ) : currentUserId && (
-          <button onClick={() => setShowReport(!showReport)} className="text-zinc-600 hover:text-red-400 text-xs px-2 py-1 rounded">🚩</button>
         )}
       </div>
 
@@ -102,22 +132,37 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
         <Link href={`/post/${post.id}`} className="block"><p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{renderContent(post.content)}</p></Link>
       )}
 
-      {showReport && currentUserId && (
-        <form onSubmit={handleReport} className="mt-2 bg-zinc-800/50 rounded-lg p-3">
-          <textarea value={reportReason} onChange={e => setReportReason(e.target.value)} placeholder="Why are you reporting this?" maxLength={500} rows={2}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none resize-none focus:border-red-500" />
-          <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={() => { setShowReport(false); setReportReason(''); }} className="text-xs text-zinc-500">Cancel</button>
-            <button type="submit" disabled={reportReason.length < 10} className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg disabled:opacity-40">Report</button>
-          </div>
-        </form>
-      )}
-
       <div className="flex items-center gap-5 mt-3 text-zinc-500">
-        <button onClick={toggleLike} className="flex items-center gap-1 text-sm hover:text-red-400 transition"><span>{liked ? '❤️' : '🤍'}</span><span>{likeCount}</span></button>
-        <Link href={`/post/${post.id}`} className="flex items-center gap-1 text-sm hover:text-blue-400 transition"><span>💬</span><span>{post.comment_count}</span></Link>
+        <button onClick={toggleLike} className="flex items-center gap-1 text-sm hover:text-red-400 transition"><span>{liked ? '❤️' : '🤍'}</span><span>{formatCount(likeCount)}</span></button>
+        <Link href={`/post/${post.id}`} className="flex items-center gap-1 text-sm hover:text-blue-400 transition"><span>💬</span><span>{formatCount(post.comment_count)}</span></Link>
         {currentUserId && <button onClick={handleShare} className="flex items-center gap-1 text-sm hover:text-green-400 transition"><span>🔗</span>{copied && <span className="text-[10px] text-green-400">Copied</span>}</button>}
       </div>
+
+      <ConfirmModal
+        show={showDelete}
+        title="Delete Post?"
+        msg="This permanently deletes this post and its likes/comments. This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onConfirm={handleDelete}
+        onCancel={() => setShowDelete(false)}
+      />
+
+      {showReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setShowReport(false)}>
+          <form onSubmit={handleReport} className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-semibold text-lg mb-1">Report Post</h3>
+            <p className="text-zinc-500 text-xs mb-4">Help us keep the community safe.</p>
+            <textarea value={reportReason} onChange={e => setReportReason(e.target.value)} placeholder="Why are you reporting this?" maxLength={500} rows={4} autoFocus
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none resize-none focus:border-red-500" />
+            <div className="flex justify-end gap-2 mt-4">
+              <button type="button" onClick={() => { setShowReport(false); setReportReason(''); }} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
+              <button type="submit" disabled={reportReason.trim().length < 10}
+                className="px-5 py-2 rounded-xl text-sm bg-red-600 text-white font-medium hover:bg-red-700 transition disabled:opacity-40">Report</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

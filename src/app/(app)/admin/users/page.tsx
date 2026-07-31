@@ -1,26 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
+import ConfirmModal from '@/components/ConfirmModal';
+import { formatCount } from '@/lib/format';
 
-function ConfirmModal({ show, title, msg, confirmLabel, danger, onConfirm, onCancel }: {
-  show: boolean; title: string; msg: string; confirmLabel?: string; danger?: boolean;
-  onConfirm: () => void; onCancel: () => void;
-}) {
-  if (!show) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-        <h3 className="text-white font-semibold text-lg mb-2">{title}</h3>
-        <p className="text-zinc-400 text-sm mb-6">{msg}</p>
-        <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
-          <button onClick={onConfirm} className={`px-5 py-2 rounded-xl text-sm text-white font-medium transition ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
-            {confirmLabel || 'Confirm'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+type ActionType = 'points' | 'role' | 'ban' | 'unban' | 'delete';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
@@ -29,7 +12,10 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [message, setMessage] = useState('');
-  const [modal, setModal] = useState<{ userId: string; username: string } | null>(null);
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [action, setAction] = useState<{ type: ActionType; userId: string; username: string } | null>(null);
+  const [pointsInput, setPointsInput] = useState('');
+  const [roleInput, setRoleInput] = useState('user');
   const [currentUserId, setCurrentUserId] = useState('');
 
   useEffect(() => {
@@ -56,8 +42,10 @@ export default function AdminUsers() {
       body: JSON.stringify({ user_id: userId, role }),
     });
     const d = await res.json();
-    if (d.success) loadUsers();
+    if (d.success) { setMessage('Role updated'); loadUsers(); }
     else setMessage(d.error);
+    setAction(null);
+    setMenuFor(null);
   }
 
   async function toggleBan(userId: string, currentBanned: boolean) {
@@ -70,6 +58,8 @@ export default function AdminUsers() {
     const d = await res.json();
     if (d.success) { setMessage(currentBanned ? 'Unbanned' : 'Banned'); loadUsers(); }
     else setMessage(d.error);
+    setAction(null);
+    setMenuFor(null);
   }
 
   async function setPoints(userId: string, value: string) {
@@ -84,33 +74,55 @@ export default function AdminUsers() {
     const d = await res.json();
     if (d.success) { setMessage('Points updated'); loadUsers(); }
     else setMessage(d.error);
+    setAction(null);
+    setMenuFor(null);
   }
 
   async function confirmDelete() {
-    if (!modal) return;
+    if (!action) return;
     const res = await fetch('/api/admin/users', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: modal.userId }),
+      body: JSON.stringify({ user_id: action.userId }),
     });
     const d = await res.json();
     if (d.success) { setMessage('User deleted'); loadUsers(); }
     else setMessage(d.error);
-    setModal(null);
+    setAction(null);
+    setMenuFor(null);
   }
 
+  const openAction = (type: ActionType, u: any) => {
+    if (type === 'points') setPointsInput(String(u.points));
+    if (type === 'role') setRoleInput(u.role || 'user');
+    setAction({ type, userId: u.id, username: u.username });
+    setMenuFor(null);
+  };
+
   const isSelf = (id: string) => id === currentUserId;
+  const target = action ? users.find(u => u.id === action.userId) : null;
 
   return (
     <div>
       <ConfirmModal
-        show={!!modal}
+        show={action?.type === 'delete'}
         title="Delete User?"
-        msg={`This permanently deletes @${modal?.username} and ALL their posts, comments, and likes. This cannot be undone.`}
+        msg={`This permanently deletes @${action?.username} and ALL their posts, comments, and likes. This cannot be undone.`}
         confirmLabel="Delete Forever"
         danger
         onConfirm={confirmDelete}
-        onCancel={() => setModal(null)}
+        onCancel={() => setAction(null)}
+      />
+      <ConfirmModal
+        show={action?.type === 'ban' || action?.type === 'unban'}
+        title={action?.type === 'ban' ? 'Ban User?' : 'Unban User?'}
+        msg={action?.type === 'ban'
+          ? `@${action?.username} will immediately lose API access (suspended) and their posts will be hidden.`
+          : `@${action?.username} will regain full access.`}
+        confirmLabel={action?.type === 'ban' ? 'Ban' : 'Unban'}
+        danger={action?.type === 'ban'}
+        onConfirm={() => action && toggleBan(action.userId, action.type === 'ban' ? false : true)}
+        onCancel={() => setAction(null)}
       />
 
       <div className="flex items-center gap-2 mb-4">
@@ -142,36 +154,29 @@ export default function AdminUsers() {
                     )}
                     {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
                   </div>
-                  <p className="text-zinc-600 text-xs mt-0.5">{u.post_count} posts</p>
+                  <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts · {u.points} pts</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number" min={0} max={1000000}
-                      defaultValue={u.points}
-                      onKeyDown={e => { if (e.key === 'Enter') setPoints(u.id, (e.target as HTMLInputElement).value); }}
-                      className="w-20 bg-zinc-800 border border-zinc-700 rounded text-xs text-white px-2 py-1 outline-none"
-                      title="Points" />
-                    <button onClick={e => {
-                      const inp = e.currentTarget.parentElement?.querySelector('input');
-                      if (inp) setPoints(u.id, inp.value);
-                    }}
-                      className="text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-300 hover:bg-zinc-700">pts</button>
-                  </div>
-                  {!isSelf(u.id) && (
+                <div className="relative">
+                  <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)}
+                    className="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition">⋯</button>
+                  {menuFor === u.id && (
                     <>
-                      <select value={u.role} onChange={e => changeRole(u.id, e.target.value)}
-                        className="bg-zinc-800 border border-zinc-700 rounded text-xs text-white px-2 py-1 outline-none">
-                        <option value="user">User</option>
-                        <option value="mod">Mod</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                      <button onClick={() => toggleBan(u.id, u.banned)}
-                        className={`text-xs px-3 py-1 rounded transition ${u.banned ? 'bg-green-800 text-green-200 hover:bg-green-700' : 'bg-red-900/50 text-red-300 hover:bg-red-800'}`}>
-                        {u.banned ? 'Unban' : 'Ban'}
-                      </button>
-                      <button onClick={() => setModal({ userId: u.id, username: u.username })}
-                        className="text-xs text-zinc-600 hover:text-red-400 px-2 py-1">Del</button>
+                      <div className="fixed inset-0 z-30" onClick={() => setMenuFor(null)} />
+                      <div className="absolute right-0 top-full z-40 mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
+                        <button onClick={() => openAction('points', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Points</button>
+                        {!isSelf(u.id) && (
+                          <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>
+                        )}
+                        {!isSelf(u.id) && (
+                          <button onClick={() => openAction(u.banned ? 'unban' : 'ban', u)}
+                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.banned ? 'text-green-400' : 'text-red-400'}`}>
+                            {u.banned ? 'Unban' : 'Ban'}
+                          </button>
+                        )}
+                        {!isSelf(u.id) && (
+                          <button onClick={() => openAction('delete', u)} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Delete User</button>
+                        )}
+                      </div>
                     </>
                   )}
                 </div>
@@ -185,6 +190,42 @@ export default function AdminUsers() {
               <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="text-zinc-500 disabled:opacity-30 text-sm">Next</button>
             </div>
           )}
+        </div>
+      )}
+
+      {action?.type === 'points' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setAction(null)}>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-semibold text-lg mb-1">Edit Points</h3>
+            <p className="text-zinc-500 text-xs mb-4">@{action.username}</p>
+            <input type="number" min={0} max={1000000} value={pointsInput} onChange={e => setPointsInput(e.target.value)} autoFocus
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
+              <button onClick={() => setPoints(action.userId, pointsInput)}
+                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {action?.type === 'role' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setAction(null)}>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-semibold text-lg mb-1">Edit Role</h3>
+            <p className="text-zinc-500 text-xs mb-4">@{action.username}</p>
+            <select value={roleInput} onChange={e => setRoleInput(e.target.value)} autoFocus
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+              <option value="user">User</option>
+              <option value="mod">Mod</option>
+              <option value="admin">Admin</option>
+            </select>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
+              <button onClick={() => changeRole(action.userId, roleInput)}
+                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

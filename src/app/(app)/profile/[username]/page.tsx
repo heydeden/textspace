@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
 import PtsBadge from '@/components/PtsBadge';
+import { formatCount } from '@/lib/format';
 import { pointsLevel } from '@/lib/points';
 
 export default function ProfilePage() {
@@ -107,23 +108,23 @@ export default function ProfilePage() {
         <p className="text-zinc-400 text-sm mt-2">{profile?.bio}</p>
         <div className="grid grid-cols-5 gap-2 mt-4 max-w-md mx-auto">
           <div className="flex flex-col items-center">
-            <span className="text-base font-bold text-white">{profile?.post_count ?? posts.length}</span>
+            <span className="text-base font-bold text-white">{formatCount(profile?.post_count ?? posts.length)}</span>
             <span className="text-[11px] text-zinc-500">Posts</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-base font-bold text-white">{profile?.follower_count ?? 0}</span>
+            <span className="text-base font-bold text-white">{formatCount(profile?.follower_count ?? 0)}</span>
             <span className="text-[11px] text-zinc-500">Followers</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-base font-bold text-white">{profile?.following_count ?? 0}</span>
+            <span className="text-base font-bold text-white">{formatCount(profile?.following_count ?? 0)}</span>
             <span className="text-[11px] text-zinc-500">Following</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-base font-bold text-white">{profile?.like_count ?? 0}</span>
+            <span className="text-base font-bold text-white">{formatCount(profile?.like_count ?? 0)}</span>
             <span className="text-[11px] text-zinc-500">Likes</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-base font-bold text-white">{profile?.points || 0}</span>
+            <span className="text-base font-bold text-white">{formatCount(profile?.points || 0)}</span>
             <span className="text-[11px] text-zinc-500">Points</span>
           </div>
         </div>

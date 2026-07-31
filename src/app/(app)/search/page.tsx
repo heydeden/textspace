@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import PostCard from '@/components/PostCard';
 import PtsBadge from '@/components/PtsBadge';
+import { formatCount } from '@/lib/format';
 
 export default function SearchPage() {
   const [q, setQ] = useState('');
@@ -99,7 +100,7 @@ export default function SearchPage() {
                     {roleBadge(u.role)}
                       <PtsBadge pts={u.points} />
                   </div>
-                  <p className="text-zinc-500 text-xs">@{u.username} · {u.points} pts</p>
+                  <p className="text-zinc-500 text-xs">@{u.username} · {formatCount(u.points)} pts</p>
                 </div>
               </Link>
             ))}

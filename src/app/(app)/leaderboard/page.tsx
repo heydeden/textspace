@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { pointsLevel } from '@/lib/points';
 import PtsBadge from '@/components/PtsBadge';
+import { formatCount } from '@/lib/format';
 
 interface Entry {
   id: string; username: string; display_name: string; role?: string;
@@ -47,10 +48,10 @@ export default function LeaderboardPage() {
                   {u.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
                   <PtsBadge pts={u.points} />
                 </div>
-                <p className="text-zinc-500 text-xs">@{u.username} · {u.post_count} posts</p>
+                <p className="text-zinc-500 text-xs">@{u.username} · {formatCount(u.post_count)} posts</p>
               </div>
               <div className="text-right">
-                <div className="text-white font-bold text-sm">{u.points} pts</div>
+                <div className="text-white font-bold text-sm">{formatCount(u.points)} pts</div>
                 <div className="text-zinc-600 text-[10px]">{pointsLevel(u.points)}</div>
               </div>
             </Link>

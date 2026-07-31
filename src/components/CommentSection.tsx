@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import PtsBadge from './PtsBadge';
+import ConfirmModal from './ConfirmModal';
 
 interface Comment {
   id: string; content: string; created_at: string;
@@ -18,6 +19,7 @@ function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent
 }) {
   const [replying, setReplying] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [replyContent, setReplyContent] = useState('');
   const isOwn = currentUserId === comment.user_id;
@@ -40,7 +42,7 @@ function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent
             <button onClick={() => setEditing(true)} className="text-zinc-600 hover:text-blue-400 text-xs">Edit</button>
           )}
           {isOwn && (
-            <button onClick={() => onDelete(comment.id)} className="text-zinc-600 hover:text-red-400 text-xs">Delete</button>
+            <button onClick={() => setConfirmDel(true)} className="text-zinc-600 hover:text-red-400 text-xs">Delete</button>
           )}
         </div>
       </div>
@@ -67,6 +69,15 @@ function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent
             disabled={!replyContent.trim()} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-4 py-1.5 rounded-full text-sm">Reply</button>
         </div>
       )}
+      <ConfirmModal
+        show={confirmDel}
+        title="Delete Comment?"
+        msg="This permanently deletes this comment and its replies."
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => { setConfirmDel(false); onDelete(comment.id); }}
+        onCancel={() => setConfirmDel(false)}
+      />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import ConfirmModal from '@/components/ConfirmModal';
+import { formatCount } from '@/lib/format';
 
 export default function AdminPosts() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -19,13 +21,15 @@ export default function AdminPosts() {
 
   useEffect(() => { loadPosts(); }, [page]);
 
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
   async function deletePost(postId: string) {
-    if (!confirm('Delete this post?')) return;
     await fetch('/api/admin/posts', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ post_id: postId }),
     });
+    setDeleteTarget(null);
     loadPosts();
   }
 
@@ -46,10 +50,10 @@ export default function AdminPosts() {
                     <span className="text-zinc-500 text-xs">@{p.username}</span>
                   </div>
                   <p className="text-zinc-300 text-sm whitespace-pre-wrap break-words">{p.content}</p>
-                  <p className="text-zinc-600 text-xs mt-1">❤️ {p.like_count} · 💬 {p.comment_count}</p>
+                  <p className="text-zinc-600 text-xs mt-1">❤️ {formatCount(p.like_count)} · 💬 {formatCount(p.comment_count)}</p>
                 </div>
                 <button
-                  onClick={() => deletePost(p.id)}
+                  onClick={() => setDeleteTarget(p.id)}
                   className="shrink-0 text-zinc-600 hover:text-red-400 text-xs px-2 py-1"
                 >
                   Delete
@@ -66,6 +70,15 @@ export default function AdminPosts() {
           )}
         </div>
       )}
+      <ConfirmModal
+        show={!!deleteTarget}
+        title="Delete Post?"
+        msg="This permanently deletes this post and its likes/comments. This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => deletePost(deleteTarget!)}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
