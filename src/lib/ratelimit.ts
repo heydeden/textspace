@@ -26,7 +26,8 @@ function sweep() {
 }
 
 export function rateLimit(req: Request, limit: number): boolean {
-  const key = clientIp(req);
+  const url = new URL(req.url);
+  const key = `${clientIp(req)}:${url.pathname}`;
   const now = Date.now();
 
   checksSinceCleanup++;
