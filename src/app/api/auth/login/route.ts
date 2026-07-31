@@ -2,11 +2,15 @@ import { sql } from '@/lib/db';
 import { verifyPassword, setSession } from '@/lib/auth';
 import { ok, err } from '@/lib/api';
 import { rateLimit } from '@/lib/ratelimit';
+import { verifyTurnstile, clientIp } from '@/lib/turnstile';
 
 export async function POST(req: Request) {
   try {
     if (!rateLimit(req, 10)) return err('Too many requests', 429);
-    const { username, password } = await req.json();
+    const body = await req.json();
+    const { username, password } = body;
+    const token = typeof body['cf-turnstile-response'] === 'string' ? body['cf-turnstile-response'] : null;
+    if (!(await verifyTurnstile(token, clientIp(req)))) return err('Turnstile verification failed', 400);
     if (!username || !password) return err('Username and password required');
 
     const rows = await sql`
