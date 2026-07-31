@@ -10,7 +10,7 @@ interface Post {
 }
 
 function renderContent(content: string) {
-  const parts = content.split(/(#\w+)/g);
+  const parts = content.split(/(#[\p{L}\p{N}_]+)/gu);
   return parts.map((part, i) => {
     if (part.startsWith('#') && part.length > 1) {
       return <Link key={i} href={`/search?q=${encodeURIComponent(part)}`} className="text-blue-400 hover:underline">{part}</Link>;

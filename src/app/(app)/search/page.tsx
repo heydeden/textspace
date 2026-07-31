@@ -19,8 +19,6 @@ export default function SearchPage() {
     });
   }, []);
 
-  const effectiveTab: 'users' | 'posts' = q.trim().startsWith('#') ? 'posts' : tab;
-
   const runSearch = useCallback(async (query: string, type: 'users' | 'posts') => {
     setLoading(true);
     setSearched(true);
@@ -33,6 +31,23 @@ export default function SearchPage() {
       }
     } finally { setLoading(false); }
   }, []);
+
+  // Init / sync search query from URL (?q=...) — e.g. hashtag clicks land here
+  useEffect(() => {
+    const fromUrl = () => {
+      const urlQ = new URLSearchParams(window.location.search).get('q') || '';
+      if (!urlQ) return;
+      setQ(urlQ);
+      const type: 'users' | 'posts' = urlQ.trim().startsWith('#') ? 'posts' : 'users';
+      setTab(type);
+      runSearch(urlQ, type);
+    };
+    fromUrl();
+    window.addEventListener('popstate', fromUrl);
+    return () => window.removeEventListener('popstate', fromUrl);
+  }, [runSearch]);
+
+  const effectiveTab: 'users' | 'posts' = q.trim().startsWith('#') ? 'posts' : tab;
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
