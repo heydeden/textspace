@@ -1,8 +1,10 @@
 import { getSession, clearSession } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import { ok, err } from '@/lib/api';
+import { rateLimit } from '@/lib/ratelimit';
 
-export async function GET() {
+export async function GET(req: Request) {
+  if (!rateLimit(req, 60)) return err('Too many requests', 429);
   const user = await getSession();
   if (!user) return err('Not logged in', 401);
 
@@ -13,7 +15,8 @@ export async function GET() {
   return ok(rows[0]);
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
+  if (!rateLimit(req, 60)) return err('Too many requests', 429);
   await clearSession();
   return ok({ message: 'Logged out' });
 }

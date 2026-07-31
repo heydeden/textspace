@@ -1,9 +1,11 @@
 import { sql } from '@/lib/db';
 import { verifyPassword, setSession } from '@/lib/auth';
 import { ok, err } from '@/lib/api';
+import { rateLimit } from '@/lib/ratelimit';
 
 export async function POST(req: Request) {
   try {
+    if (!rateLimit(req, 10)) return err('Too many requests', 429);
     const { username, password } = await req.json();
     if (!username || !password) return err('Username and password required');
 

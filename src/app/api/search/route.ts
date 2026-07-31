@@ -1,8 +1,10 @@
 import { query } from '@/lib/db';
-import { ok } from '@/lib/api';
+import { ok, err } from '@/lib/api';
 import { getSession } from '@/lib/auth';
+import { rateLimit } from '@/lib/ratelimit';
 
 export async function GET(req: Request) {
+  if (!rateLimit(req, 60)) return err('Too many requests', 429);
   const url = new URL(req.url);
   const q = url.searchParams.get('q') || '';
   const type = url.searchParams.get('type') || 'users';

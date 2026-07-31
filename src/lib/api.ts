@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSession, type UserPayload } from './auth';
 import { sql } from './db';
+import { rateLimit } from './ratelimit';
+
+const API_LIMIT_PER_MIN = 60;
 
 const NO_STORE: HeadersInit = { 'Cache-Control': 'private, no-store' };
 
@@ -20,6 +23,7 @@ export function isUUID(id: string): boolean {
 
 export function withUser(handler: (req: Request, user: NonNullable<UserPayload>) => Promise<Response>) {
   return async (req: Request) => {
+    if (!rateLimit(req, API_LIMIT_PER_MIN)) return err('Too many requests', 429);
     const user = await getSession();
     if (!user) return err('Unauthorized', 401);
     const rows = await sql`SELECT banned FROM profiles WHERE id = ${user.id}`;
@@ -31,6 +35,7 @@ export function withUser(handler: (req: Request, user: NonNullable<UserPayload>)
 
 export function withAdmin(handler: (req: Request, user: NonNullable<UserPayload>) => Promise<Response>) {
   return async (req: Request) => {
+    if (!rateLimit(req, API_LIMIT_PER_MIN)) return err('Too many requests', 429);
     const user = await getSession();
     if (!user) return err('Unauthorized', 401);
     const rows = await sql`SELECT role, banned FROM profiles WHERE id = ${user.id}`;
