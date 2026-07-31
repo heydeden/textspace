@@ -51,7 +51,7 @@ export default function LeaderboardPage() {
                   {u.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
                   <PtsBadge pts={u.points} />
                 </div>
-                <p className="text-zinc-500 text-xs">@{u.username} · {formatCount(u.post_count)} posts</p>
+                <p className="text-zinc-500 text-xs">{formatCount(u.post_count)} posts</p>
               </div>
               <div className="text-right">
                 <div className="text-white font-bold text-sm">{formatCount(u.points)} pts</div>

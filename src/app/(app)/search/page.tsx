@@ -102,7 +102,7 @@ export default function SearchPage() {
                     {roleBadge(u.role)}
                       <PtsBadge pts={u.points} />
                   </div>
-                  <p className="text-zinc-500 text-xs">@{u.username} · {formatCount(u.points)} pts</p>
+                  <p className="text-zinc-500 text-xs">{formatCount(u.points)} pts</p>
                 </div>
               </Link>
             ))}
