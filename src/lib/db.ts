@@ -62,18 +62,6 @@ export async function initDB() {
     read BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
-  await db`CREATE TABLE IF NOT EXISTS reposts (
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-    post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    PRIMARY KEY (user_id, post_id)
-  )`;
-  await db`CREATE TABLE IF NOT EXISTS bookmarks (
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-    post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    PRIMARY KEY (user_id, post_id)
-  )`;
   await db`CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sender_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,

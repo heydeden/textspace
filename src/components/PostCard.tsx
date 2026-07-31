@@ -6,14 +6,11 @@ interface Post {
   id: string; content: string; created_at: string;
   user_id: string; username: string; display_name: string; role?: string;
   like_count: number; comment_count: number; liked_by_me: boolean;
-  bookmarked_by_me?: boolean;
 }
 
 export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { post: Post; currentUserId?: string; onUpdate?: () => void; onDelete?: (id: string) => void }) {
   const [liked, setLiked] = useState(post.liked_by_me);
   const [likeCount, setLikeCount] = useState(post.like_count);
-  const [reposted, setReposted] = useState(false);
-  const [bookmarked, setBookmarked] = useState(!!post.bookmarked_by_me);
   const [showReport, setShowReport] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -22,16 +19,6 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
   async function toggleLike() {
     const res = await fetch('/api/likes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post_id: post.id }) });
     if (res.ok) { const d = (await res.json()).data; setLiked(d.liked); setLikeCount(c => d.liked ? c + 1 : c - 1); onUpdate?.(); }
-  }
-
-  async function toggleRepost() {
-    const res = await fetch('/api/reposts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post_id: post.id }) });
-    if (res.ok) { setReposted((await res.json()).data.reposted); onUpdate?.(); }
-  }
-
-  async function toggleBookmark() {
-    const res = await fetch('/api/bookmarks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post_id: post.id }) });
-    if (res.ok) setBookmarked((await res.json()).data.bookmarked);
   }
 
   async function handleDelete() {
@@ -77,8 +64,6 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
       <div className="flex items-center gap-5 mt-3 text-zinc-500">
         <button onClick={toggleLike} className="flex items-center gap-1 text-sm hover:text-red-400 transition"><span>{liked ? '❤️' : '🤍'}</span><span>{likeCount}</span></button>
         <Link href={`/post/${post.id}`} className="flex items-center gap-1 text-sm hover:text-blue-400 transition"><span>💬</span><span>{post.comment_count}</span></Link>
-        {currentUserId && <button onClick={toggleRepost} className={`flex items-center gap-1 text-sm transition ${reposted ? 'text-green-400' : 'hover:text-green-400'}`}><span>🔁</span></button>}
-        {currentUserId && <button onClick={toggleBookmark} className={`flex items-center gap-1 text-sm transition ${bookmarked ? 'text-red-500' : 'hover:text-red-500'}`}><span>{bookmarked ? '🔖' : '🔖'}</span></button>}
       </div>
     </div>
   );

@@ -64,7 +64,6 @@ export default function Navbar({ username }: { username?: string }) {
               <MenuItem icon="👤" label="Profile" href={`/profile/${username}`} onClick={() => setMenuOpen(false)} />
               <MenuItem icon="🔍" label="Search" href="/search" onClick={() => setMenuOpen(false)} />
               <MenuItem icon="🔔" label={`Notifications${unread > 0 ? ` (${unread})` : ''}`} href="/notifications" onClick={() => setMenuOpen(false)} />
-              <MenuItem icon="🔖" label="Bookmarks" href="/bookmarks" onClick={() => setMenuOpen(false)} />
               <MenuItem icon="💬" label="Messages" href="/messages" onClick={() => setMenuOpen(false)} />
               {role === 'admin' && <MenuItem icon="🛡" label="Admin Panel" href="/admin" onClick={() => setMenuOpen(false)} />}
               <MenuItem icon="⚙" label="Settings" href="/settings" onClick={() => setMenuOpen(false)} />
@@ -89,7 +88,6 @@ export default function Navbar({ username }: { username?: string }) {
           <div className="flex items-center gap-3">
             {username ? (
               <>
-                <Link href="/bookmarks" className="text-sm text-zinc-500 hover:text-white">Bookmarks</Link>
                 <Link href="/messages" className="text-sm text-zinc-500 hover:text-white">Messages</Link>
                 <Link href="/settings" className="text-sm text-zinc-500 hover:text-white">Settings</Link>
                 <button onClick={handleLogout} className="text-sm text-zinc-500 hover:text-red-400">Logout</button>
