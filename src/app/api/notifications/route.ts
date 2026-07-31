@@ -13,14 +13,15 @@ export const GET = withUser(async (req, user) => {
       n.post_id
     FROM notifications n
     JOIN profiles a ON n.actor_id = a.id
-    WHERE n.user_id = $1
+    WHERE n.user_id = $1 AND a.banned = false
+      AND NOT EXISTS (SELECT 1 FROM blocks WHERE (blocker_id = $1 AND blocked_id = n.actor_id) OR (blocker_id = n.actor_id AND blocked_id = $1))
   `;
   if (unreadOnly) q += ` AND n.read = false`;
   q += ` ORDER BY n.created_at DESC LIMIT 50`;
 
   const rows = await query(q, [user.id]);
   const unread = await sql`
-    SELECT COUNT(*)::int as count FROM notifications WHERE user_id = ${user.id} AND read = false
+    SELECT COUNT(*)::int as count FROM notifications n JOIN profiles a ON n.actor_id = a.id WHERE n.user_id = ${user.id} AND n.read = false AND a.banned = false AND NOT EXISTS (SELECT 1 FROM blocks WHERE (blocker_id = ${user.id} AND blocked_id = n.actor_id) OR (blocker_id = n.actor_id AND blocked_id = ${user.id}))
   `;
   return ok({ notifications: rows, unread: unread[0].count });
 });

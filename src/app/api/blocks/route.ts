@@ -19,6 +19,8 @@ export const POST = withUser(async (req, user) => {
   }
 
   await sql`INSERT INTO blocks (blocker_id, blocked_id) VALUES (${user.id}, ${blocked_id})`;
+  await sql`DELETE FROM follows WHERE (follower_id = ${user.id} AND following_id = ${blocked_id}) OR (follower_id = ${blocked_id} AND following_id = ${user.id})`;
+  await sql`DELETE FROM notifications WHERE (user_id = ${user.id} AND actor_id = ${blocked_id}) OR (user_id = ${blocked_id} AND actor_id = ${user.id})`;
   return ok({ blocked: true }, 201);
 });
 

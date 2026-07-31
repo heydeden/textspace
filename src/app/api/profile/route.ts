@@ -41,6 +41,7 @@ export const PATCH = withUser(async (req, user) => {
   if (display_name !== undefined && (display_name.length < 1 || display_name.length > 50)) {
     return err('Display name 1-50 characters');
   }
+  if (bio !== undefined && bio.length > 200) return err('Bio max 200 characters');
 
   const updates: string[] = [];
   const params: any[] = [];

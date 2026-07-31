@@ -1,5 +1,5 @@
 import { query } from '@/lib/db';
-import { ok, err } from '@/lib/api';
+import { ok, err, isUUID } from '@/lib/api';
 import { withAdmin } from '@/lib/api';
 
 export const GET = withAdmin(async (req) => {
@@ -32,6 +32,7 @@ export const GET = withAdmin(async (req) => {
 export const PATCH = withAdmin(async (req, user) => {
   const { user_id, role, banned } = await req.json();
   if (!user_id) return err('user_id required');
+  if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
 
   const updates: string[] = [];
@@ -58,6 +59,7 @@ export const PATCH = withAdmin(async (req, user) => {
 export const DELETE = withAdmin(async (req, user) => {
   const { user_id } = await req.json();
   if (!user_id) return err('user_id required');
+  if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id) return err('Cannot delete yourself', 403);
 
   await query('DELETE FROM profiles WHERE id = $1', [user_id]);
