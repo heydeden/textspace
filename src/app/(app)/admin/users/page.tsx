@@ -72,6 +72,20 @@ export default function AdminUsers() {
     else setMessage(d.error);
   }
 
+  async function setPoints(userId: string, value: string) {
+    setMessage('');
+    const pts = parseInt(value, 10);
+    if (isNaN(pts) || pts < 0 || pts > 1000000) { setMessage('Points must be integer 0-1000000'); return; }
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, points: pts }),
+    });
+    const d = await res.json();
+    if (d.success) { setMessage('Points updated'); loadUsers(); }
+    else setMessage(d.error);
+  }
+
   async function confirmDelete() {
     if (!modal) return;
     const res = await fetch('/api/admin/users', {
@@ -128,9 +142,22 @@ export default function AdminUsers() {
                     )}
                     {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
                   </div>
-                  <p className="text-zinc-600 text-xs mt-0.5">{u.post_count} posts · {u.points} pts</p>
+                  <p className="text-zinc-600 text-xs mt-0.5">{u.post_count} posts</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number" min={0} max={1000000}
+                      defaultValue={u.points}
+                      onKeyDown={e => { if (e.key === 'Enter') setPoints(u.id, (e.target as HTMLInputElement).value); }}
+                      className="w-20 bg-zinc-800 border border-zinc-700 rounded text-xs text-white px-2 py-1 outline-none"
+                      title="Points" />
+                    <button onClick={e => {
+                      const inp = e.currentTarget.parentElement?.querySelector('input');
+                      if (inp) setPoints(u.id, inp.value);
+                    }}
+                      className="text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-300 hover:bg-zinc-700">pts</button>
+                  </div>
                   {!isSelf(u.id) && (
                     <>
                       <select value={u.role} onChange={e => changeRole(u.id, e.target.value)}

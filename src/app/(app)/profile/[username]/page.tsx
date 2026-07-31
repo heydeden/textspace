@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
+import PtsBadge from '@/components/PtsBadge';
 import { pointsLevel } from '@/lib/points';
 
 export default function ProfilePage() {
@@ -100,23 +101,33 @@ export default function ProfilePage() {
         <div className="flex items-center justify-center gap-1">
           <h1 className="text-xl font-bold text-white">{profile?.display_name || username}</h1>
           {roleBadge(profile?.role)}
+          <PtsBadge pts={profile?.points} />
         </div>
         <p className="text-zinc-500 text-sm">@{username}</p>
         <p className="text-zinc-400 text-sm mt-2">{profile?.bio}</p>
-        <div className="flex items-center justify-center gap-4 mt-3 text-xs">
-          <span className="text-zinc-500">{profile?.post_count ?? posts.length} posts</span>
-          <span className="text-zinc-600">·</span>
-          <span className="text-zinc-500">{profile?.follower_count ?? 0} followers</span>
-          <span className="text-zinc-600">·</span>
-          <span className="text-zinc-500">{profile?.following_count ?? 0} following</span>
-          <span className="text-zinc-600">·</span>
-          <span className="text-zinc-500">{profile?.like_count ?? 0} likes</span>
-          <span className="text-zinc-600">·</span>
-          <span className="text-zinc-400">
-            {profile?.points || 0} pts
-            <span className="text-zinc-600 ml-1">({pointsLevel(profile?.points || 0)})</span>
-          </span>
+        <div className="grid grid-cols-5 gap-2 mt-4 max-w-md mx-auto">
+          <div className="flex flex-col items-center">
+            <span className="text-base font-bold text-white">{profile?.post_count ?? posts.length}</span>
+            <span className="text-[11px] text-zinc-500">Posts</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-base font-bold text-white">{profile?.follower_count ?? 0}</span>
+            <span className="text-[11px] text-zinc-500">Followers</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-base font-bold text-white">{profile?.following_count ?? 0}</span>
+            <span className="text-[11px] text-zinc-500">Following</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-base font-bold text-white">{profile?.like_count ?? 0}</span>
+            <span className="text-[11px] text-zinc-500">Likes</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-base font-bold text-white">{profile?.points || 0}</span>
+            <span className="text-[11px] text-zinc-500">Points</span>
+          </div>
         </div>
+        <p className="text-zinc-600 text-xs mt-2">Level: {pointsLevel(profile?.points || 0)}</p>
         {isMe ? (
           <button
             onClick={() => router.push('/settings')}

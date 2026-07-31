@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { pointsLevel } from '@/lib/points';
+import PtsBadge from '@/components/PtsBadge';
 
 interface Entry {
   id: string; username: string; display_name: string; role?: string;
@@ -44,6 +45,7 @@ export default function LeaderboardPage() {
                   <span className="text-white font-medium text-sm">{u.display_name}</span>
                   {u.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
                   {u.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
+                  <PtsBadge pts={u.points} />
                 </div>
                 <p className="text-zinc-500 text-xs">@{u.username} · {u.post_count} posts</p>
               </div>

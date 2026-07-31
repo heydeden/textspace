@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import PtsBadge from '@/components/PtsBadge';
 
 export default function MessagesPage() {
   const [convos, setConvos] = useState<any[]>([]);
@@ -34,6 +35,7 @@ export default function MessagesPage() {
                   <p className="text-white font-medium text-sm">{c.display_name}</p>
                   {c.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
                   {c.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
+                  <PtsBadge pts={c.points} />
                 </div>
                 <p className="text-zinc-500 text-xs truncate">{c.last_message}</p>
               </div>

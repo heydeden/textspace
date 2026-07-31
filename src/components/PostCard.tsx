@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import PtsBadge from './PtsBadge';
 
 interface Post {
   id: string; content: string; created_at: string;
-  user_id: string; username: string; display_name: string; role?: string;
+  user_id: string; username: string; display_name: string; role?: string; points?: number;
   like_count: number; comment_count: number; liked_by_me: boolean;
 }
 
@@ -74,7 +75,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
       <div className="flex items-center justify-between mb-1">
         <Link href={`/profile/${post.username}`} className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">{post.display_name[0]?.toUpperCase()}</div>
-          <div><span className="font-medium text-sm text-white">{post.display_name}</span><span className="text-zinc-500 text-xs ml-2">@{post.username}</span>{post.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 ml-1 px-1.5 py-0.5 rounded-full">Admin</span>}{post.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 ml-1 px-1.5 py-0.5 rounded-full">Mod</span>}</div>
+          <div><span className="font-medium text-sm text-white">{post.display_name}</span><span className="text-zinc-500 text-xs ml-2">@{post.username}</span>{post.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 ml-1 px-1.5 py-0.5 rounded-full">Admin</span>}{post.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 ml-1 px-1.5 py-0.5 rounded-full">Mod</span>}<PtsBadge pts={post.points} /></div>
         </Link>
         {isOwn ? (
           <div className="flex items-center gap-1">

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import PtsBadge from '@/components/PtsBadge';
 import Link from 'next/link';
 
 export default function ChatPage() {
@@ -43,6 +44,7 @@ export default function ChatPage() {
         <span className="text-zinc-500 text-xs">@{other?.username}</span>
         {other?.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
         {other?.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
+        <PtsBadge pts={other?.points} />
       </Link>
 
       <div className="flex-1 overflow-y-auto space-y-3 mb-4">

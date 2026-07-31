@@ -30,7 +30,7 @@ export const GET = withAdmin(async (req) => {
 });
 
 export const PATCH = withAdmin(async (req, user) => {
-  const { user_id, role, banned } = await req.json();
+  const { user_id, role, banned, points } = await req.json();
   if (!user_id) return err('user_id required');
   if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
@@ -48,6 +48,11 @@ export const PATCH = withAdmin(async (req, user) => {
     if (user_id === user.id) return err('Cannot ban yourself', 403);
     updates.push(`banned = $${idx++}`);
     params.push(banned);
+  }
+  if (points !== undefined) {
+    if (!Number.isInteger(points) || points < 0 || points > 1000000) return err('Points must be integer 0-1000000');
+    updates.push(`points = $${idx++}`);
+    params.push(points);
   }
 
   if (updates.length === 0) return err('Nothing to update');

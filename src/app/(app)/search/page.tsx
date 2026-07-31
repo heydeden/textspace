@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import PostCard from '@/components/PostCard';
+import PtsBadge from '@/components/PtsBadge';
 
 export default function SearchPage() {
   const [q, setQ] = useState('');
@@ -81,6 +82,7 @@ export default function SearchPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-white font-medium text-sm">{u.display_name}</span>
                     {roleBadge(u.role)}
+                      <PtsBadge pts={u.points} />
                   </div>
                   <p className="text-zinc-500 text-xs">@{u.username} · {u.points} pts</p>
                 </div>

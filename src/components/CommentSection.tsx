@@ -1,10 +1,11 @@
 'use client';
 import { useState } from 'react';
+import PtsBadge from './PtsBadge';
 
 interface Comment {
   id: string; content: string; created_at: string;
   parent_id: string | null;
-  user_id: string; username: string; display_name: string; role?: string;
+  user_id: string; username: string; display_name: string; role?: string; points?: number;
 }
 
 function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent }: {
@@ -29,6 +30,7 @@ function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent
           <span className="text-zinc-500 text-xs">@{comment.username}</span>
           {comment.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
           {comment.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
+          <PtsBadge pts={comment.points} />
         </div>
         <div className="flex items-center gap-2">
           {currentUserId && !isOwn && !indent && (
