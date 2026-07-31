@@ -17,3 +17,5 @@ export async function DELETE() {
   await clearSession();
   return ok({ message: 'Logged out' });
 }
+
+export const dynamic = 'force-dynamic';

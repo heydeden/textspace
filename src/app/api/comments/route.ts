@@ -90,3 +90,5 @@ export const DELETE = withUser(async (req, user) => {
   await sql`DELETE FROM comments WHERE id = ${comment_id} OR parent_id = ${comment_id} OR parent_id IN (SELECT id FROM comments WHERE parent_id = ${comment_id})`;
   return ok({ deleted: true });
 });
+
+export const dynamic = 'force-dynamic';

@@ -23,3 +23,5 @@ export async function POST(req: Request) {
     return ok(user, 201);
   } catch (e) { return err('Registration failed', 500); }
 }
+
+export const dynamic = 'force-dynamic';

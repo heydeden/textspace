@@ -30,3 +30,5 @@ export const POST = withUser(async (req, user) => {
   }
   return ok({ liked: true }, 201);
 });
+
+export const dynamic = 'force-dynamic';

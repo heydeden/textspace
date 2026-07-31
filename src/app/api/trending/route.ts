@@ -17,3 +17,5 @@ export const GET = withUser(async (req, user) => {
   `, [user.id]);
   return ok({ posts: rows });
 });
+
+export const dynamic = 'force-dynamic';

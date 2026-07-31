@@ -22,3 +22,5 @@ export async function POST(req: Request) {
     return ok({ id: user.id, username: user.username, display_name: user.display_name });
   } catch (e) { return err('Login failed', 500); }
 }
+
+export const dynamic = 'force-dynamic';

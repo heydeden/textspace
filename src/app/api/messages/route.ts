@@ -48,3 +48,5 @@ export const POST = withUser(async (req, user) => {
   `;
   return ok(rows[0], 201);
 });
+
+export const dynamic = 'force-dynamic';

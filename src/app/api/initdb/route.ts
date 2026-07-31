@@ -10,3 +10,5 @@ export async function POST() {
     return err('Database initialization failed', 500);
   }
 }
+
+export const dynamic = 'force-dynamic';

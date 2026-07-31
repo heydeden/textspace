@@ -19,3 +19,5 @@ export const GET = withAdmin(async () => {
     today_posts: todayPosts[0].count,
   });
 });
+
+export const dynamic = 'force-dynamic';

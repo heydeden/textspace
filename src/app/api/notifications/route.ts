@@ -33,3 +33,5 @@ export const POST = withUser(async (req, user) => {
   }
   return ok({ read: true });
 });
+
+export const dynamic = 'force-dynamic';

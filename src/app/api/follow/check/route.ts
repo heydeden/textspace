@@ -14,3 +14,5 @@ export const POST = withUser(async (req, user) => {
   `;
   return ok({ following: existing.length > 0 });
 });
+
+export const dynamic = 'force-dynamic';

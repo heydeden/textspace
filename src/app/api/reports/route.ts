@@ -16,3 +16,5 @@ export const POST = withUser(async (req, user) => {
   `;
   return ok({ reported: true }, 201);
 });
+
+export const dynamic = 'force-dynamic';

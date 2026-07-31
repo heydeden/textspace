@@ -65,3 +65,5 @@ export const PATCH = withUser(async (req, user) => {
   );
   return ok(rows[0]);
 });
+
+export const dynamic = 'force-dynamic';

@@ -32,3 +32,5 @@ export const PATCH = withAdmin(async (req) => {
   await sql`UPDATE reports SET resolved = true WHERE id = ${report_id}`;
   return ok({ resolved: true });
 });
+
+export const dynamic = 'force-dynamic';

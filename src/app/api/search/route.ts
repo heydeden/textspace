@@ -36,3 +36,5 @@ export async function GET(req: Request) {
   );
   return ok({ users });
 }
+
+export const dynamic = 'force-dynamic';

@@ -34,3 +34,5 @@ export const GET = withUser(async (req, user) => {
   `;
   return ok({ blocked: rows });
 });
+
+export const dynamic = 'force-dynamic';

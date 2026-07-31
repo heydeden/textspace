@@ -23,3 +23,5 @@ export const GET = withUser(async (req, user) => {
 
   return ok({ messages: rows, other: other[0] });
 });
+
+export const dynamic = 'force-dynamic';

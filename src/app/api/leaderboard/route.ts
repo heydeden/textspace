@@ -14,3 +14,5 @@ export const GET = withUser(async (req, user) => {
   `, [user.id]);
   return ok({ leaderboard: rows });
 });
+
+export const dynamic = 'force-dynamic';

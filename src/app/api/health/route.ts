@@ -15,3 +15,5 @@ export async function GET() {
     return err('Database not configured. Go to Vercel Dashboard → Storage → Add Neon.', 503);
   }
 }
+
+export const dynamic = 'force-dynamic';

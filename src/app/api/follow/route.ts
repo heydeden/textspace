@@ -27,3 +27,5 @@ export const POST = withUser(async (req, user) => {
   await sql`INSERT INTO notifications (user_id, actor_id, type) VALUES (${following_id}, ${user.id}, 'follow')`;
   return ok({ following: true }, 201);
 });
+
+export const dynamic = 'force-dynamic';

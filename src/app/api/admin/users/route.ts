@@ -70,3 +70,5 @@ export const DELETE = withAdmin(async (req, user) => {
   await query('DELETE FROM profiles WHERE id = $1', [user_id]);
   return ok({ deleted: true });
 });
+
+export const dynamic = 'force-dynamic';

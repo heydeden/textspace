@@ -101,3 +101,5 @@ export const DELETE = withUser(async (req, user) => {
 
   return ok({ deleted: true });
 });
+
+export const dynamic = 'force-dynamic';

@@ -10,3 +10,5 @@ export const POST = withUser(async (req, user) => {
   await sql`UPDATE profiles SET role = 'admin' WHERE id = ${user.id}`;
   return ok({ message: 'You are now admin. Please login again.', role: 'admin' });
 });
+
+export const dynamic = 'force-dynamic';
