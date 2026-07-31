@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import VerifiedBadge from '@/components/VerifiedBadge';
 
 export default function NotificationsPage() {
   const [notifs, setNotifs] = useState<any[]>([]);
@@ -31,6 +32,7 @@ export default function NotificationsPage() {
                 </div>
                 <div className="text-sm text-zinc-300">
                   <Link href={`/profile/${n.username}`} className="text-white font-medium hover:underline">{n.display_name}</Link>
+                  {n.verified || n.role === 'admin' ? <VerifiedBadge /> : null}
                   {n.type === 'like' && <> liked your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
                   {n.type === 'comment' && <> commented on your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
                   {n.type === 'follow' && <> followed you</>}

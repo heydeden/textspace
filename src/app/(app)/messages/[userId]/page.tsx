@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { Check, CheckCheck } from 'lucide-react';
 import PtsBadge from '@/components/PtsBadge';
+import VerifiedBadge from '@/components/VerifiedBadge';
 import Link from 'next/link';
 
 export default function ChatPage() {
@@ -41,6 +43,7 @@ export default function ChatPage() {
       <Link href={`/profile/${other?.username}`} className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">{other?.display_name?.[0]?.toUpperCase()}</div>
         <span className="text-white font-medium text-sm">{other?.display_name}</span>
+        {other?.verified || other?.role === 'admin' ? <VerifiedBadge /> : null}
         <span className="text-zinc-500 text-xs">@{other?.username}</span>
         {other?.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
         {other?.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
@@ -54,7 +57,7 @@ export default function ChatPage() {
             <div className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${m.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-zinc-200'}`}>
               {m.content}
               {m.sender_id === currentUserId && (
-                <span className={`ml-1.5 text-[10px] ${m.read ? 'text-blue-200' : 'text-white/40'}`}>{m.read ? '✓✓' : '✓'}</span>
+                <span className={`ml-1.5 inline-flex align-middle ${m.read ? 'text-blue-200' : 'text-white/40'}`}>{m.read ? <CheckCheck className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}</span>
               )}
             </div>
           </div>

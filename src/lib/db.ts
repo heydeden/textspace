@@ -88,6 +88,7 @@ export async function initDB() {
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS points INT DEFAULT 0`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS banned BOOLEAN DEFAULT false`;
+  await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT false`;
   await db`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at DESC)`;
   await db`CREATE INDEX IF NOT EXISTS idx_messages_users ON messages(sender_id, receiver_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_reports_resolved ON reports(resolved)`;

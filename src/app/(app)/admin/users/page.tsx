@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
+import VerifiedBadge from '@/components/VerifiedBadge';
 import { formatCount } from '@/lib/format';
 
 type ActionType = 'points' | 'role' | 'ban' | 'unban' | 'delete';
@@ -75,6 +76,19 @@ export default function AdminUsers() {
     if (d.success) { setMessage('Points updated'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
+    setMenuFor(null);
+  }
+
+  async function toggleVerify(userId: string, currentVerified: boolean) {
+    setMessage('');
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, verified: !currentVerified }),
+    });
+    const d = await res.json();
+    if (d.success) { setMessage(currentVerified ? 'Unverified' : 'Verified'); loadUsers(); }
+    else setMessage(d.error);
     setMenuFor(null);
   }
 
@@ -153,6 +167,7 @@ export default function AdminUsers() {
                       </span>
                     )}
                     {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
+                    {(u.verified || u.role === 'admin') && <VerifiedBadge />}
                   </div>
                   <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts · {u.points} pts</p>
                 </div>
@@ -163,6 +178,11 @@ export default function AdminUsers() {
                     <>
                       <div className="fixed inset-0 z-30" onClick={() => setMenuFor(null)} />
                       <div className="absolute right-0 top-full z-40 mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
+                        {!isSelf(u.id) && (
+                          <button onClick={() => toggleVerify(u.id, !!u.verified)} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.verified ? 'text-zinc-400' : 'text-sky-400'}`}>
+                            {u.verified ? 'Unverify' : 'Verify'}
+                          </button>
+                        )}
                         <button onClick={() => openAction('points', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Points</button>
                         {!isSelf(u.id) && (
                           <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>

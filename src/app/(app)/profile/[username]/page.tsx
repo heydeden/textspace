@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
 import PtsBadge from '@/components/PtsBadge';
+import VerifiedBadge from '@/components/VerifiedBadge';
 import { formatCount } from '@/lib/format';
 import { pointsLevel } from '@/lib/points';
 
@@ -101,6 +102,7 @@ export default function ProfilePage() {
         </div>
         <div className="flex items-center justify-center gap-1">
           <h1 className="text-xl font-bold text-white">{profile?.display_name || username}</h1>
+          {(profile?.verified || profile?.role === 'admin') ? <VerifiedBadge /> : null}
           {roleBadge(profile?.role)}
           <PtsBadge pts={profile?.points} />
         </div>

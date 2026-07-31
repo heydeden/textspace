@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Heart, MessageCircle } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 import { formatCount } from '@/lib/format';
 
@@ -50,7 +51,7 @@ export default function AdminPosts() {
                     <span className="text-zinc-500 text-xs">@{p.username}</span>
                   </div>
                   <p className="text-zinc-300 text-sm whitespace-pre-wrap break-words">{p.content}</p>
-                  <p className="text-zinc-600 text-xs mt-1">❤️ {formatCount(p.like_count)} · 💬 {formatCount(p.comment_count)}</p>
+                  <p className="text-zinc-600 text-xs mt-1 inline-flex items-center gap-1"><Heart className="w-3 h-3" /> {formatCount(p.like_count)} <MessageCircle className="w-3 h-3 ml-2" /> {formatCount(p.comment_count)}</p>
                 </div>
                 <button
                   onClick={() => setDeleteTarget(p.id)}

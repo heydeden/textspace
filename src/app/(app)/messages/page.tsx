@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PtsBadge from '@/components/PtsBadge';
+import VerifiedBadge from '@/components/VerifiedBadge';
 
 export default function MessagesPage() {
   const [convos, setConvos] = useState<any[]>([]);
@@ -33,6 +34,7 @@ export default function MessagesPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="text-white font-medium text-sm">{c.display_name}</p>
+                  {c.verified || c.role === 'admin' ? <VerifiedBadge /> : null}
                   {c.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
                   {c.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
                   <PtsBadge pts={c.points} />

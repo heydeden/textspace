@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   if (!user) return err('Not logged in', 401);
 
   const rows = await sql`
-    SELECT id, username, display_name, bio, role, points, created_at FROM profiles WHERE id = ${user.id}
+    SELECT id, username, display_name, bio, role, points, verified, created_at FROM profiles WHERE id = ${user.id}
   `;
   if (rows.length === 0) { await clearSession(); return err('User not found', 404); }
   return ok(rows[0]);

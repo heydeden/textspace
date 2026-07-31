@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
 import PtsBadge from './PtsBadge';
+import VerifiedBadge from './VerifiedBadge';
 import ConfirmModal from './ConfirmModal';
 
 interface Comment {
   id: string; content: string; created_at: string;
   parent_id: string | null;
-  user_id: string; username: string; display_name: string; role?: string; points?: number;
+  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean;
 }
 
 function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent }: {
@@ -29,6 +30,7 @@ function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 mb-1">
           <span className="font-medium text-sm text-white">{comment.display_name}</span>
+          {comment.verified || comment.role === 'admin' ? <VerifiedBadge /> : null}
           <span className="text-zinc-500 text-xs">@{comment.username}</span>
           {comment.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
           {comment.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}

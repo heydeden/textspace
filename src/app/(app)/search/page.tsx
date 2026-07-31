@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import PostCard from '@/components/PostCard';
 import PtsBadge from '@/components/PtsBadge';
+import VerifiedBadge from '@/components/VerifiedBadge';
 import { formatCount } from '@/lib/format';
 
 export default function SearchPage() {
@@ -97,6 +98,7 @@ export default function SearchPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-white font-medium text-sm">{u.display_name}</span>
+                    {u.verified || u.role === 'admin' ? <VerifiedBadge /> : null}
                     {roleBadge(u.role)}
                       <PtsBadge pts={u.points} />
                   </div>

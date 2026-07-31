@@ -21,7 +21,7 @@ export const GET = withAdmin(async (req) => {
 
   params.push(limit, offset);
   const rows = await query(
-    `SELECT id, username, display_name, bio, role, points, banned, created_at::text,
+    `SELECT id, username, display_name, bio, role, points, banned, verified, created_at::text,
       (SELECT COUNT(*)::int FROM posts WHERE user_id = profiles.id) as post_count
      FROM profiles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
@@ -30,7 +30,7 @@ export const GET = withAdmin(async (req) => {
 });
 
 export const PATCH = withAdmin(async (req, user) => {
-  const { user_id, role, banned, points } = await req.json();
+  const { user_id, role, banned, points, verified } = await req.json();
   if (!user_id) return err('user_id required');
   if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
@@ -53,6 +53,12 @@ export const PATCH = withAdmin(async (req, user) => {
     if (!Number.isInteger(points) || points < 0 || points > 1000000) return err('Points must be integer 0-1000000');
     updates.push(`points = $${idx++}`);
     params.push(points);
+  }
+  if (verified !== undefined) {
+    if (user_id === user.id) return err('Cannot verify yourself', 403);
+    if (typeof verified !== 'boolean') return err('verified must be boolean');
+    updates.push(`verified = $${idx++}`);
+    params.push(verified);
   }
 
   if (updates.length === 0) return err('Nothing to update');

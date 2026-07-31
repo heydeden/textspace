@@ -4,7 +4,7 @@ import { withUser } from '@/lib/api';
 
 export const GET = withUser(async (req, user) => {
   const rows = await query(`
-    SELECT u.id, u.username, u.display_name, u.role, u.points,
+    SELECT u.id, u.username, u.display_name, u.role, u.points, u.verified,
       (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as post_count
     FROM profiles u
     WHERE u.banned = false
