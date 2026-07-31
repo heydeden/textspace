@@ -16,9 +16,9 @@ export default function TurnstileWidget({ onToken, resetKey = 0 }: { onToken: (t
   const widgetId = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
   onTokenRef.current = onToken;
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
-    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
     if (!siteKey || !ref.current) return;
 
     const render = () => {
@@ -61,6 +61,10 @@ export default function TurnstileWidget({ onToken, resetKey = 0 }: { onToken: (t
       onTokenRef.current('');
     }
   }, [resetKey]);
+
+  if (!siteKey) {
+    return <p className="text-xs text-amber-400 text-center mt-2">Bot protection misconfigured — site key missing. Please try again later.</p>;
+  }
 
   return <div ref={ref} />;
 }
