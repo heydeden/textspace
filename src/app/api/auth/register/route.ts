@@ -2,17 +2,13 @@ import { sql } from '@/lib/db';
 import { hashPassword, setSession, type UserPayload } from '@/lib/auth';
 import { ok, err } from '@/lib/api';
 import { rateLimit } from '@/lib/ratelimit';
-import { verifyTurnstile, clientIp } from '@/lib/turnstile';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
 
 export async function POST(req: Request) {
   try {
     if (!rateLimit(req, 10)) return err('Too many requests', 429);
-    const body = await req.json();
-    const { username, display_name, password } = body;
-    const token = typeof body['cf-turnstile-response'] === 'string' ? body['cf-turnstile-response'] : null;
-    if (!(await verifyTurnstile(token, clientIp(req)))) return err('Turnstile verification failed', 400);
+    const { username, display_name, password } = await req.json();
     if (!username || !display_name || !password) return err('All fields required');
     if (!USERNAME_RE.test(username)) return err('Username 3-30 chars, letters/numbers/underscore only');
     if (password.length < 8) return err('Password min 8 chars');

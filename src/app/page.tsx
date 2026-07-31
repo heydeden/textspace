@@ -1,18 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import TurnstileWidget from '@/components/TurnstileWidget';
 
 export default function Home() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileError, setTurnstileError] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -21,10 +17,9 @@ export default function Home() {
     setLoading(true);
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-      const body: Record<string, string> = mode === 'login'
+      const body = mode === 'login'
         ? { username, password }
         : { username, display_name: displayName, password };
-      body['cf-turnstile-response'] = turnstileToken;
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -32,12 +27,7 @@ export default function Home() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error);
-        setTurnstileToken('');
-        setTurnstileResetKey(k => k + 1);
-        return;
-      }
+      if (!res.ok) { setError(data.error); return; }
       router.push('/feed');
     } finally { setLoading(false); }
   }
@@ -75,8 +65,6 @@ export default function Home() {
           />
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
-          {turnstileError && <p className="text-amber-400 text-xs">Bot protection error: {turnstileError}</p>}
-          {loading && <p className="text-zinc-500 text-xs text-center">Verifying...</p>}
 
           <button
             type="submit"
@@ -85,13 +73,12 @@ export default function Home() {
           >
             {loading ? 'Loading...' : mode === 'login' ? 'Login' : 'Register'}
           </button>
-          <TurnstileWidget onToken={setTurnstileToken} onError={setTurnstileError} resetKey={turnstileResetKey} />
         </form>
 
         <p className="text-center text-zinc-500 text-sm mt-6">
           {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
           <button
-            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setTurnstileToken(''); setTurnstileResetKey(k => k + 1); }}
+            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
             className="text-blue-500 hover:underline"
           >
             {mode === 'login' ? 'Register' : 'Login'}
