@@ -7,6 +7,68 @@ interface Comment {
   user_id: string; username: string; display_name: string; role?: string;
 }
 
+function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent }: {
+  comment: Comment;
+  currentUserId?: string;
+  onReply: (parent: Comment, content: string) => void;
+  onEdit: (c: Comment, content: string) => void;
+  onDelete: (id: string) => void;
+  indent: boolean;
+}) {
+  const [replying, setReplying] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+  const [replyContent, setReplyContent] = useState('');
+  const isOwn = currentUserId === comment.user_id;
+
+  return (
+    <div className={`border-b border-zinc-800 py-2 last:border-0 ${indent ? 'ml-6 border-l border-zinc-800 pl-3' : ''}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="font-medium text-sm text-white">{comment.display_name}</span>
+          <span className="text-zinc-500 text-xs">@{comment.username}</span>
+          {comment.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
+          {comment.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          {currentUserId && !isOwn && !indent && (
+            <button onClick={() => { setReplying(!replying); setReplyContent(''); }} className="text-zinc-600 hover:text-blue-400 text-xs">Reply</button>
+          )}
+          {isOwn && !editing && (
+            <button onClick={() => setEditing(true)} className="text-zinc-600 hover:text-blue-400 text-xs">Edit</button>
+          )}
+          {isOwn && (
+            <button onClick={() => onDelete(comment.id)} className="text-zinc-600 hover:text-red-400 text-xs">Delete</button>
+          )}
+        </div>
+      </div>
+
+      {editing ? (
+        <div>
+          <textarea value={editContent} onChange={e => setEditContent(e.target.value)} maxLength={200} rows={2}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none resize-none focus:border-blue-500" />
+          <div className="flex justify-end gap-2 mt-1">
+            <button onClick={() => { setEditing(false); setEditContent(comment.content); }} className="text-xs text-zinc-500">Cancel</button>
+            <button onClick={() => { onEdit(comment, editContent); setEditing(false); }} disabled={!editContent.trim()}
+              className="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg disabled:opacity-40">Save</button>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-zinc-300">{comment.content}</p>
+      )}
+
+      {replying && (
+        <div className="flex gap-2 mt-2">
+          <input value={replyContent} onChange={e => setReplyContent(e.target.value)} placeholder={`Reply to @${comment.username}...`} maxLength={200}
+            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-1.5 text-sm text-white outline-none focus:border-blue-600" />
+          <button onClick={() => { onReply(comment, replyContent); setReplying(false); setReplyContent(''); }}
+            disabled={!replyContent.trim()} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-4 py-1.5 rounded-full text-sm">Reply</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CommentSection({ postId, currentUserId }: { postId: string; currentUserId?: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [content, setContent] = useState('');
@@ -37,6 +99,27 @@ export default function CommentSection({ postId, currentUserId }: { postId: stri
     } finally { setLoading(false); }
   }
 
+  async function handleReply(parent: Comment, replyContent: string) {
+    const res = await fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_id: postId, content: replyContent, parent_id: parent.id }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setComments(prev => [...prev, { ...d.data, user_id: currentUserId || '', username: '', display_name: '' }]);
+    }
+  }
+
+  async function handleEdit(comment: Comment, newContent: string) {
+    const res = await fetch('/api/comments', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ comment_id: comment.id, content: newContent }),
+    });
+    if (res.ok) setComments(prev => prev.map(c => c.id === comment.id ? { ...c, content: newContent } : c));
+  }
+
   async function handleDelete(commentId: string) {
     const res = await fetch('/api/comments', {
       method: 'DELETE',
@@ -45,6 +128,9 @@ export default function CommentSection({ postId, currentUserId }: { postId: stri
     });
     if (res.ok) setComments(prev => prev.filter(c => c.id !== commentId));
   }
+
+  const parents = comments.filter(c => !c.parent_id);
+  const childrenOf = (parentId: string) => comments.filter(c => c.parent_id === parentId);
 
   return (
     <div>
@@ -63,20 +149,12 @@ export default function CommentSection({ postId, currentUserId }: { postId: stri
         </form>
       )}
 
-      {loaded && comments.map(c => (
-        <div key={c.id} className="border-b border-zinc-800 py-2 last:border-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="font-medium text-sm text-white">{c.display_name}</span>
-              <span className="text-zinc-500 text-xs">@{c.username}</span>
-              {c.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
-              {c.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
-            </div>
-            {currentUserId === c.user_id && (
-              <button onClick={() => handleDelete(c.id)} className="text-zinc-600 hover:text-red-400 text-xs">Delete</button>
-            )}
-          </div>
-          <p className="text-sm text-zinc-300">{c.content}</p>
+      {loaded && parents.map(c => (
+        <div key={c.id}>
+          <CommentItem comment={c} currentUserId={currentUserId} onReply={handleReply} onEdit={handleEdit} onDelete={handleDelete} indent={false} />
+          {childrenOf(c.id).map(child => (
+            <CommentItem key={child.id} comment={child} currentUserId={currentUserId} onReply={handleReply} onEdit={handleEdit} onDelete={handleDelete} indent />
+          ))}
         </div>
       ))}
     </div>

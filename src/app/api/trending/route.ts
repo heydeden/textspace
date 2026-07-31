@@ -12,6 +12,7 @@ export const GET = withUser(async (req, user) => {
     FROM posts p
     JOIN profiles u ON p.user_id = u.id
     WHERE p.created_at > NOW() - INTERVAL '24 hours' AND u.banned = false
+      AND NOT EXISTS (SELECT 1 FROM blocks WHERE blocker_id = $1 AND blocked_id = p.user_id)
     ORDER BY like_count DESC LIMIT 20
   `, [user.id]);
   return ok({ posts: rows });

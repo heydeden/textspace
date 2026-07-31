@@ -63,6 +63,7 @@ export default function Navbar({ username }: { username?: string }) {
             <div className="space-y-1">
               <MenuItem icon="👤" label="Profile" href={`/profile/${username}`} onClick={() => setMenuOpen(false)} />
               <MenuItem icon="🔍" label="Search" href="/search" onClick={() => setMenuOpen(false)} />
+              <MenuItem icon="🏆" label="Leaderboard" href="/leaderboard" onClick={() => setMenuOpen(false)} />
               <MenuItem icon="🔔" label={`Notifications${unread > 0 ? ` (${unread})` : ''}`} href="/notifications" onClick={() => setMenuOpen(false)} />
               <MenuItem icon="💬" label="Messages" href="/messages" onClick={() => setMenuOpen(false)} />
               {role === 'admin' && <MenuItem icon="🛡" label="Admin Panel" href="/admin" onClick={() => setMenuOpen(false)} />}
@@ -81,6 +82,7 @@ export default function Navbar({ username }: { username?: string }) {
             <Link href="/feed" className="text-xl font-bold text-blue-500">TextSpace</Link>
             <Link href="/feed" className="text-sm text-zinc-400 hover:text-white">Feed</Link>
             <Link href="/search" className="text-sm text-zinc-400 hover:text-white">Search</Link>
+            <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-white">Top</Link>
             <Link href="/notifications" className="text-sm text-zinc-400 hover:text-white relative">Notif{unread > 0 && <span className="ml-1 text-red-400">({unread})</span>}</Link>
             {username && <Link href={`/profile/${username}`} className="text-sm text-zinc-400 hover:text-white">Profile</Link>}
             {role === 'admin' && <Link href="/admin" className="text-sm text-amber-400 hover:text-amber-300">Admin</Link>}

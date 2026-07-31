@@ -1,6 +1,7 @@
-import { query } from '@/lib/db';
+import { query, sql } from '@/lib/db';
 import { ok, err } from '@/lib/api';
 import { withUser } from '@/lib/api';
+import { getSession } from '@/lib/auth';
 
 export const GET = async (req: Request) => {
   const url = new URL(req.url);
@@ -8,11 +9,31 @@ export const GET = async (req: Request) => {
   if (!username) return err('username required');
 
   const rows = await query(
-    'SELECT id, username, display_name, bio, role, points, created_at FROM profiles WHERE username = $1',
+    `SELECT id, username, display_name, bio, role, points, banned, created_at FROM profiles WHERE username = $1`,
     [username]
   );
   if (rows.length === 0) return err('User not found', 404);
-  return ok(rows[0]);
+
+  const target = rows[0];
+  if (target.banned) return err('User not found', 404);
+
+  const stats = await query(
+    `SELECT
+       (SELECT COUNT(*) FROM posts WHERE user_id = $1)::int as post_count,
+       (SELECT COUNT(*) FROM follows WHERE following_id = $1)::int as follower_count,
+       (SELECT COUNT(*) FROM follows WHERE follower_id = $1)::int as following_count,
+       (SELECT COUNT(*) FROM likes l JOIN posts p ON l.post_id = p.id WHERE p.user_id = $1)::int as like_count`,
+    [target.id]
+  );
+
+  let blocked_by_me = false;
+  const me = await getSession();
+  if (me) {
+    const b = await sql`SELECT 1 FROM blocks WHERE blocker_id = ${me.id} AND blocked_id = ${target.id}`;
+    blocked_by_me = b.length > 0;
+  }
+
+  return ok({ ...rows[0], ...stats[0], blocked_by_me });
 };
 
 export const PATCH = withUser(async (req, user) => {

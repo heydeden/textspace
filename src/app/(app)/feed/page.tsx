@@ -7,7 +7,7 @@ import PostForm from '@/components/PostForm';
 export default function FeedPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'latest' | 'trending'>('latest');
+  const [tab, setTab] = useState<'latest' | 'trending' | 'following'>('latest');
   const [currentUserId, setCurrentUserId] = useState('');
   const router = useRouter();
 
@@ -19,7 +19,7 @@ export default function FeedPage() {
 
   async function loadPosts() {
     setLoading(true);
-    const endpoint = tab === 'trending' ? '/api/trending' : '/api/posts';
+    const endpoint = tab === 'trending' ? '/api/trending' : tab === 'following' ? '/api/posts?feed=following' : '/api/posts';
     const res = await fetch(endpoint);
     const d = await res.json();
     if (d.data) setPosts(d.data.posts || d.data.posts);
@@ -33,6 +33,7 @@ export default function FeedPage() {
       <div className="flex border-b border-zinc-800 mb-4">
         <button onClick={() => setTab('latest')} className={`flex-1 pb-3 text-sm font-medium transition ${tab === 'latest' ? 'text-white border-b-2 border-blue-500' : 'text-zinc-500'}`}>Latest</button>
         <button onClick={() => setTab('trending')} className={`flex-1 pb-3 text-sm font-medium transition ${tab === 'trending' ? 'text-white border-b-2 border-blue-500' : 'text-zinc-500'}`}>Trending 🔥</button>
+        <button onClick={() => setTab('following')} className={`flex-1 pb-3 text-sm font-medium transition ${tab === 'following' ? 'text-white border-b-2 border-blue-500' : 'text-zinc-500'}`}>Following</button>
       </div>
 
       {tab === 'latest' && <PostForm onPost={() => loadPosts()} />}

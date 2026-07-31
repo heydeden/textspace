@@ -38,6 +38,23 @@ export const POST = withUser(async (req, user) => {
   return ok(rows[0], 201);
 });
 
+export const PATCH = withUser(async (req, user) => {
+  const { comment_id, content } = await req.json();
+  if (!comment_id) return err('comment_id required');
+  if (!content || content.trim().length === 0) return err('Content required');
+  if (content.length > 200) return err('Max 200 characters');
+
+  const comment = await sql`SELECT user_id FROM comments WHERE id = ${comment_id}`;
+  if (comment.length === 0) return err('Comment not found', 404);
+  if (comment[0].user_id !== user.id) return err('Not your comment', 403);
+
+  const rows = await sql`
+    UPDATE comments SET content = ${content} WHERE id = ${comment_id}
+    RETURNING id, content, created_at, parent_id
+  `;
+  return ok(rows[0]);
+});
+
 export const DELETE = withUser(async (req, user) => {
   const { comment_id } = await req.json();
   if (!comment_id) return err('comment_id required');
@@ -46,6 +63,6 @@ export const DELETE = withUser(async (req, user) => {
   if (comment.length === 0) return err('Comment not found', 404);
   if (comment[0].user_id !== user.id) return err('Not your comment', 403);
 
-  await sql`DELETE FROM comments WHERE id = ${comment_id}`;
+  await sql`DELETE FROM comments WHERE id = ${comment_id} OR parent_id = ${comment_id}`;
   return ok({ deleted: true });
 });

@@ -31,6 +31,15 @@ export const POST = withUser(async (req, user) => {
   if (!receiver_id || !content) return err('receiver_id and content required');
   if (content.length > 500) return err('Max 500 characters');
 
+  if (receiver_id === user.id) return err('Cannot message yourself');
+
+  const blocked = await sql`
+    SELECT 1 FROM blocks
+    WHERE (blocker_id = ${user.id} AND blocked_id = ${receiver_id})
+       OR (blocker_id = ${receiver_id} AND blocked_id = ${user.id})
+  `;
+  if (blocked.length > 0) return err('Cannot message this user', 403);
+
   const rows = await sql`
     INSERT INTO messages (sender_id, receiver_id, content)
     VALUES (${user.id}, ${receiver_id}, ${content})

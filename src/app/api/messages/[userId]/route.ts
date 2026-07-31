@@ -8,7 +8,7 @@ export const GET = withUser(async (req, user) => {
   if (!userId) return err('user_id required');
 
   const rows = await query(`
-    SELECT m.id, m.content, m.created_at, m.sender_id
+    SELECT m.id, m.content, m.created_at, m.sender_id, m.read
     FROM messages m
     WHERE (m.sender_id = $1 AND m.receiver_id = $2) OR (m.sender_id = $2 AND m.receiver_id = $1)
     ORDER BY m.created_at ASC LIMIT 100

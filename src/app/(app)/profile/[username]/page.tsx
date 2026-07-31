@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
+import { pointsLevel } from '@/lib/points';
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -12,6 +13,11 @@ export default function ProfilePage() {
   const [following, setFollowing] = useState(false);
   const [isMe, setIsMe] = useState(false);
   const [currentUserId, setCurrentUserId] = useState('');
+
+  async function loadPosts() {
+    const res = await fetch(`/api/posts?username=${username}`);
+    if (res.ok) setPosts((await res.json()).data?.posts || []);
+  }
 
   useEffect(() => {
     async function load() {
@@ -25,7 +31,6 @@ export default function ProfilePage() {
       if (meData) {
         setCurrentUserId(meData.id);
         setIsMe(meData.username === username);
-        // Fetch full profile info including role & points
         const profileRes = await fetch(`/api/profile?username=${username}`);
         if (profileRes.ok) {
           setProfile((await profileRes.json()).data);
@@ -35,11 +40,6 @@ export default function ProfilePage() {
       }
       if (postsData) {
         setPosts(postsData.posts);
-        // Check if following based on follow API
-        if (!meData || meData.username !== username) {
-          const followCheck = await fetch('/api/auth/me').then(r => r.json()).then(d => d.data);
-          // We'll use a simpler approach - check via follow API
-        }
       }
       setLoading(false);
     }
@@ -69,20 +69,24 @@ export default function ProfilePage() {
     }
   }
 
+  async function toggleBlock() {
+    const res = await fetch('/api/blocks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setProfile((p: any) => ({ ...p, blocked_by_me: d.data.blocked }));
+    }
+  }
+
   const roleBadge = (role?: string) => {
     switch (role) {
       case 'admin': return <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full ml-2">Admin</span>;
       case 'mod': return <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full ml-2">Mod</span>;
       default: return null;
     }
-  };
-
-  const pointsLevel = (pts: number) => {
-    if (pts >= 1000) return 'Platinum';
-    if (pts >= 500) return 'Gold';
-    if (pts >= 200) return 'Silver';
-    if (pts >= 50) return 'Bronze';
-    return 'Newcomer';
   };
 
   if (loading) return <div className="text-center text-zinc-500 py-8">Loading...</div>;
@@ -100,8 +104,14 @@ export default function ProfilePage() {
         <p className="text-zinc-500 text-sm">@{username}</p>
         <p className="text-zinc-400 text-sm mt-2">{profile?.bio}</p>
         <div className="flex items-center justify-center gap-4 mt-3 text-xs">
-          <span className="text-zinc-500">{posts.length} posts</span>
-          <span className="text-zinc-500">|</span>
+          <span className="text-zinc-500">{profile?.post_count ?? posts.length} posts</span>
+          <span className="text-zinc-600">·</span>
+          <span className="text-zinc-500">{profile?.follower_count ?? 0} followers</span>
+          <span className="text-zinc-600">·</span>
+          <span className="text-zinc-500">{profile?.following_count ?? 0} following</span>
+          <span className="text-zinc-600">·</span>
+          <span className="text-zinc-500">{profile?.like_count ?? 0} likes</span>
+          <span className="text-zinc-600">·</span>
           <span className="text-zinc-400">
             {profile?.points || 0} pts
             <span className="text-zinc-600 ml-1">({pointsLevel(profile?.points || 0)})</span>
@@ -123,6 +133,14 @@ export default function ProfilePage() {
             >{following ? 'Following' : 'Follow'}</button>
             <button onClick={() => profile?.id && router.push(`/messages/${profile.id}`)}
               className="px-4 py-2 rounded-full text-sm font-medium border border-zinc-700 text-zinc-300 hover:border-zinc-500 transition">Message</button>
+            {!profile?.blocked_by_me && (
+              <button onClick={toggleBlock}
+                className="px-4 py-2 rounded-full text-sm font-medium border border-red-900 text-red-400 hover:bg-red-950/50 transition">Block</button>
+            )}
+            {profile?.blocked_by_me && (
+              <button onClick={toggleBlock}
+                className="px-4 py-2 rounded-full text-sm font-medium border border-zinc-700 text-zinc-300 hover:border-green-500 hover:text-green-400 transition">Unblock</button>
+            )}
           </div>
         )}
       </div>
@@ -130,7 +148,7 @@ export default function ProfilePage() {
       {posts.length === 0 ? (
         <div className="text-center text-zinc-600 py-8 text-sm">No posts yet</div>
       ) : (
-        posts.map(p => <PostCard key={p.id} post={p} currentUserId={currentUserId} onUpdate={() => {}} />)
+        posts.map(p => <PostCard key={p.id} post={p} currentUserId={currentUserId} onUpdate={() => loadPosts()} />)
       )}
     </div>
   );

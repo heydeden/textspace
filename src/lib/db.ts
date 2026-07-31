@@ -53,6 +53,12 @@ export async function initDB() {
     created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (follower_id, following_id)
   )`;
+  await db`CREATE TABLE IF NOT EXISTS blocks (
+    blocker_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    blocked_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (blocker_id, blocked_id)
+  )`;
   await db`CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,

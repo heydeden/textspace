@@ -5,6 +5,7 @@ import { withUser } from '@/lib/api';
 export const GET = withUser(async (req, user) => {
   const url = new URL(req.url);
   const username = url.searchParams.get('username');
+  const feed = url.searchParams.get('feed');
 
   let sqlStr = `
     SELECT p.id, p.content, p.created_at,
@@ -18,10 +19,18 @@ export const GET = withUser(async (req, user) => {
   const params: any[] = [user.id];
   const conditions: string[] = ['u.banned = false'];
 
+  if (feed === 'following') {
+    conditions.push(`(p.user_id IN (SELECT following_id FROM follows WHERE follower_id = $${params.length + 1}) OR p.user_id = $${params.length + 1})`);
+    params.push(user.id);
+  }
+
   if (username) {
     conditions.push(`u.username = $${params.length + 1}`);
     params.push(username);
   }
+
+  conditions.push(`NOT EXISTS (SELECT 1 FROM blocks WHERE blocker_id = $${params.length + 1} AND blocked_id = p.user_id)`);
+  params.push(user.id);
 
   sqlStr += ` WHERE ${conditions.join(' AND ')}`;
 
@@ -48,6 +57,26 @@ export const POST = withUser(async (req, user) => {
   await sql`UPDATE profiles SET points = points + 5 WHERE id = ${user.id}`;
 
   return ok(rows[0], 201);
+});
+
+export const PATCH = withUser(async (req, user) => {
+  const { post_id, content } = await req.json();
+  if (!post_id) return err('post_id required');
+  if (!content || content.trim().length === 0) return err('Content required');
+  if (content.length > 280) return err('Max 280 characters');
+
+  const post = await sql`SELECT user_id, created_at FROM posts WHERE id = ${post_id}`;
+  if (post.length === 0) return err('Post not found', 404);
+  if (post[0].user_id !== user.id) return err('Not your post', 403);
+
+  const ageHours = (Date.now() - new Date(post[0].created_at).getTime()) / 3600000;
+  if (ageHours > 24) return err('Can only edit posts within 24 hours', 403);
+
+  const rows = await sql`
+    UPDATE posts SET content = ${content} WHERE id = ${post_id}
+    RETURNING id, content, created_at
+  `;
+  return ok(rows[0]);
 });
 
 export const DELETE = withUser(async (req, user) => {
