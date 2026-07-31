@@ -6,6 +6,8 @@ export const GET = withUser(async (req, user) => {
   const url = new URL(req.url);
   const username = url.searchParams.get('username');
   const feed = url.searchParams.get('feed');
+  const id = url.searchParams.get('id');
+  if (id && !isUUID(id)) return err('Invalid post id');
 
   let sqlStr = `
     SELECT p.id, p.content, p.created_at,
@@ -27,6 +29,11 @@ export const GET = withUser(async (req, user) => {
   if (username) {
     conditions.push(`u.username = $${params.length + 1}`);
     params.push(username);
+  }
+
+  if (id) {
+    conditions.push(`p.id = $${params.length + 1}`);
+    params.push(id);
   }
 
   conditions.push(`NOT EXISTS (SELECT 1 FROM blocks WHERE (blocker_id = $${params.length + 1} AND blocked_id = p.user_id) OR (blocker_id = p.user_id AND blocked_id = $${params.length + 1}))`);
