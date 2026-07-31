@@ -3,3 +3,5 @@ node_modules/
 .env.local
 .env
 *.local
+react-19.2.8.tgz
+tsconfig.tsbuildinfo

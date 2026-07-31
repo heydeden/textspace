@@ -1,5 +1,5 @@
 import { query, sql } from '@/lib/db';
-import { ok, err } from '@/lib/api';
+import { ok, err, isUUID } from '@/lib/api';
 import { withAdmin } from '@/lib/api';
 
 export const GET = withAdmin(async () => {
@@ -20,6 +20,7 @@ export const GET = withAdmin(async () => {
 export const DELETE = withAdmin(async (req) => {
   const { report_id } = await req.json();
   if (!report_id) return err('report_id required');
+  if (!isUUID(report_id)) return err('Invalid report_id');
   await sql`DELETE FROM reports WHERE id = ${report_id}`;
   return ok({ deleted: true });
 });
@@ -27,6 +28,7 @@ export const DELETE = withAdmin(async (req) => {
 export const PATCH = withAdmin(async (req) => {
   const { report_id } = await req.json();
   if (!report_id) return err('report_id required');
+  if (!isUUID(report_id)) return err('Invalid report_id');
   await sql`UPDATE reports SET resolved = true WHERE id = ${report_id}`;
   return ok({ resolved: true });
 });

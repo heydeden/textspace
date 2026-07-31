@@ -10,10 +10,19 @@ export function err(msg: string, status = 400) {
   return NextResponse.json({ success: false, error: msg }, { status });
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUUID(id: string): boolean {
+  return UUID_RE.test(id);
+}
+
 export function withUser(handler: (req: Request, user: NonNullable<UserPayload>) => Promise<Response>) {
   return async (req: Request) => {
     const user = await getSession();
     if (!user) return err('Unauthorized', 401);
+    const rows = await sql`SELECT banned FROM profiles WHERE id = ${user.id}`;
+    if (rows.length === 0) return err('Unauthorized', 401);
+    if (rows[0].banned) return err('Account suspended', 403);
     return handler(req, user);
   };
 }

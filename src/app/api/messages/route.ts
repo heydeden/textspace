@@ -1,5 +1,5 @@
 import { sql, query } from '@/lib/db';
-import { ok, err } from '@/lib/api';
+import { ok, err, isUUID } from '@/lib/api';
 import { withUser } from '@/lib/api';
 
 export const GET = withUser(async (req, user) => {
@@ -29,6 +29,7 @@ export const GET = withUser(async (req, user) => {
 export const POST = withUser(async (req, user) => {
   const { receiver_id, content } = await req.json();
   if (!receiver_id || !content) return err('receiver_id and content required');
+  if (!isUUID(receiver_id)) return err('Invalid receiver_id');
   if (content.length > 500) return err('Max 500 characters');
 
   if (receiver_id === user.id) return err('Cannot message yourself');

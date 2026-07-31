@@ -12,6 +12,9 @@ export const POST = withUser(async (req, user) => {
 
   const following_id = target[0].id;
 
+  const blocked = await sql`SELECT 1 FROM blocks WHERE (blocker_id = ${user.id} AND blocked_id = ${following_id}) OR (blocker_id = ${following_id} AND blocked_id = ${user.id})`;
+  if (blocked.length > 0) return err('Cannot follow', 403);
+
   const existing = await sql`SELECT 1 FROM follows WHERE follower_id = ${user.id} AND following_id = ${following_id}`;
   if (existing.length > 0) {
     await sql`DELETE FROM follows WHERE follower_id = ${user.id} AND following_id = ${following_id}`;

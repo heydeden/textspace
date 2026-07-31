@@ -1,5 +1,5 @@
 import { query, sql } from '@/lib/db';
-import { ok, err } from '@/lib/api';
+import { ok, err, isUUID } from '@/lib/api';
 import { withUser } from '@/lib/api';
 
 export const GET = withUser(async (req, user) => {
@@ -29,7 +29,7 @@ export const GET = withUser(async (req, user) => {
     params.push(username);
   }
 
-  conditions.push(`NOT EXISTS (SELECT 1 FROM blocks WHERE blocker_id = $${params.length + 1} AND blocked_id = p.user_id)`);
+  conditions.push(`NOT EXISTS (SELECT 1 FROM blocks WHERE (blocker_id = $${params.length + 1} AND blocked_id = p.user_id) OR (blocker_id = p.user_id AND blocked_id = $${params.length + 1}))`);
   params.push(user.id);
 
   sqlStr += ` WHERE ${conditions.join(' AND ')}`;
@@ -63,6 +63,7 @@ export const PATCH = withUser(async (req, user) => {
   const { post_id, content } = await req.json();
   if (!post_id) return err('post_id required');
   if (!content || content.trim().length === 0) return err('Content required');
+  if (!isUUID(post_id)) return err('Invalid post_id');
   if (content.length > 280) return err('Max 280 characters');
 
   const post = await sql`SELECT user_id, created_at FROM posts WHERE id = ${post_id}`;
@@ -82,6 +83,7 @@ export const PATCH = withUser(async (req, user) => {
 export const DELETE = withUser(async (req, user) => {
   const { post_id } = await req.json();
   if (!post_id) return err('post_id required');
+  if (!isUUID(post_id)) return err('Invalid post_id');
 
   const post = await sql`SELECT user_id FROM posts WHERE id = ${post_id}`;
   if (post.length === 0) return err('Post not found', 404);

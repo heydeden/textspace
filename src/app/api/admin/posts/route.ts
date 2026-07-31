@@ -1,5 +1,5 @@
 import { query } from '@/lib/db';
-import { ok, err } from '@/lib/api';
+import { ok, err, isUUID } from '@/lib/api';
 import { withAdmin } from '@/lib/api';
 
 export const GET = withAdmin(async (req) => {
@@ -27,6 +27,7 @@ export const GET = withAdmin(async (req) => {
 export const DELETE = withAdmin(async (req) => {
   const { post_id } = await req.json();
   if (!post_id) return err('post_id required');
+  if (!isUUID(post_id)) return err('Invalid post_id');
   await query('DELETE FROM posts WHERE id = $1', [post_id]);
   return ok({ deleted: true });
 });
