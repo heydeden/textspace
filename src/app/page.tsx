@@ -9,6 +9,7 @@ export default function Home() {
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileError, setTurnstileError] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
@@ -74,6 +75,7 @@ export default function Home() {
           />
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
+          {turnstileError && <p className="text-amber-400 text-xs">Bot protection error: {turnstileError}</p>}
           {loading && <p className="text-zinc-500 text-xs text-center">Verifying...</p>}
 
           <button
@@ -83,7 +85,7 @@ export default function Home() {
           >
             {loading ? 'Loading...' : mode === 'login' ? 'Login' : 'Register'}
           </button>
-          <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileResetKey} />
+          <TurnstileWidget onToken={setTurnstileToken} onError={setTurnstileError} resetKey={turnstileResetKey} />
         </form>
 
         <p className="text-center text-zinc-500 text-sm mt-6">

@@ -6,16 +6,23 @@ declare global {
     turnstile?: {
       render: (el: HTMLElement, opts: Record<string, unknown>) => string;
       reset: (widgetId: string) => void;
+      execute: (widgetId: string) => void;
       remove: (widgetId: string) => void;
     };
   }
 }
 
-export default function TurnstileWidget({ onToken, resetKey = 0 }: { onToken: (token: string) => void; resetKey?: number }) {
+export default function TurnstileWidget({ onToken, onError, resetKey = 0 }: {
+  onToken: (token: string) => void;
+  onError?: (code: string) => void;
+  resetKey?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
+  const onErrorRef = useRef(onError);
   onTokenRef.current = onToken;
+  onErrorRef.current = onError;
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
@@ -25,14 +32,18 @@ export default function TurnstileWidget({ onToken, resetKey = 0 }: { onToken: (t
       if (!window.turnstile || !ref.current) return;
       if (widgetId.current) {
         window.turnstile.reset(widgetId.current);
+        window.turnstile.execute(widgetId.current);
         return;
       }
       widgetId.current = window.turnstile.render(ref.current, {
         sitekey: siteKey,
         size: 'invisible',
+        execution: 'execute',
         callback: (token: string) => onTokenRef.current(token),
         'expired-callback': () => onTokenRef.current(''),
+        'error-callback': (code: string) => onErrorRef.current?.(code),
       });
+      window.turnstile.execute(widgetId.current);
     };
 
     if (window.turnstile) {
@@ -58,6 +69,7 @@ export default function TurnstileWidget({ onToken, resetKey = 0 }: { onToken: (t
     if (resetKey === 0) return;
     if (window.turnstile && widgetId.current) {
       window.turnstile.reset(widgetId.current);
+      window.turnstile.execute(widgetId.current);
       onTokenRef.current('');
     }
   }, [resetKey]);

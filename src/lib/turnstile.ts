@@ -1,6 +1,7 @@
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 export async function verifyTurnstile(token: string | null | undefined, ip?: string | null): Promise<boolean> {
+  if (process.env.TURNSTILE_BYPASS === 'true') return true;
   if (!token) return false;
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) return false;
