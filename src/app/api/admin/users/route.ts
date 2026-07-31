@@ -21,7 +21,7 @@ export const GET = withAdmin(async (req) => {
 
   params.push(limit, offset);
   const rows = await query(
-    `SELECT id, username, display_name, bio, role, points, banned, verified, created_at::text,
+    `SELECT id, username, display_name, bio, role, points, banned, verified, avatar_style, created_at::text,
       (SELECT COUNT(*)::int FROM posts WHERE user_id = profiles.id) as post_count
      FROM profiles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params

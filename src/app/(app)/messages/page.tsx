@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PtsBadge from '@/components/PtsBadge';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import Avatar from '@/components/Avatar';
 
 export default function MessagesPage() {
   const [convos, setConvos] = useState<any[]>([]);
@@ -30,7 +31,7 @@ export default function MessagesPage() {
           {convos.map(c => (
             <Link key={c.user_id} href={`/messages/${c.user_id}`}
               className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold shrink-0">{c.display_name?.[0]?.toUpperCase()}</div>
+              <Avatar style={c.avatar_style} username={c.username} displayName={c.display_name} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="text-white font-medium text-sm">{c.display_name}</p>

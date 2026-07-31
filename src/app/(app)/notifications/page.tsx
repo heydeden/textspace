@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import Avatar from '@/components/Avatar';
 
 export default function NotificationsPage() {
   const [notifs, setNotifs] = useState<any[]>([]);
@@ -27,9 +28,7 @@ export default function NotificationsPage() {
           {notifs.map(n => (
             <div key={n.id} className={`bg-zinc-900 border ${n.read ? 'border-zinc-800' : 'border-blue-800'} rounded-xl p-4`}>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold shrink-0">
-                  {n.display_name?.[0]?.toUpperCase()}
-                </div>
+                <Avatar style={n.avatar_style} username={n.username} displayName={n.display_name} size="sm" />
                 <div className="text-sm text-zinc-300">
                   <Link href={`/profile/${n.username}`} className="text-white font-medium hover:underline">{n.display_name}</Link>
                   {n.verified || n.role === 'admin' ? <VerifiedBadge /> : null}

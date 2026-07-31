@@ -4,6 +4,7 @@ import Link from 'next/link';
 import PostCard from '@/components/PostCard';
 import PtsBadge from '@/components/PtsBadge';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 
 export default function SearchPage() {
@@ -92,9 +93,7 @@ export default function SearchPage() {
             {users.map(u => (
               <Link key={u.id} href={`/profile/${u.username}`}
                 className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold shrink-0">
-                  {u.display_name[0]?.toUpperCase()}
-                </div>
+                <Avatar style={u.avatar_style} username={u.username} displayName={u.display_name} size="md" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-white font-medium text-sm">{u.display_name}</span>

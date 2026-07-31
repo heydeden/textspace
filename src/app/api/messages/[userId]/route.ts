@@ -8,7 +8,7 @@ export const GET = withUser(async (req, user) => {
   if (!userId) return err('user_id required');
   if (!isUUID(userId)) return err('Invalid user_id');
 
-  const other = await sql`SELECT id, username, display_name, role, points, verified FROM profiles WHERE id = ${userId}`;
+  const other = await sql`SELECT id, username, display_name, role, points, verified, avatar_style FROM profiles WHERE id = ${userId}`;
   if (other.length === 0) return err('User not found', 404);
 
   // Mark incoming messages as read before selecting so receipt is fresh

@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
 import PtsBadge from '@/components/PtsBadge';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 import { pointsLevel } from '@/lib/points';
 
@@ -97,8 +98,8 @@ export default function ProfilePage() {
   return (
     <div>
       <div className="border border-zinc-800 rounded-xl p-6 mb-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold mx-auto mb-3">
-          {username[0]?.toUpperCase()}
+        <div className="mx-auto mb-3">
+          <Avatar style={profile?.avatar_style} username={profile?.username || username} displayName={profile?.display_name || username} size="lg" />
         </div>
         <div className="flex items-center justify-center gap-1">
           <h1 className="text-xl font-bold text-white">{profile?.display_name || username}</h1>

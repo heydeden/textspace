@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { Heart, MessageCircle, Link2 } from 'lucide-react';
 import PtsBadge from './PtsBadge';
 import VerifiedBadge from './VerifiedBadge';
+import Avatar from './Avatar';
 import ConfirmModal from './ConfirmModal';
 import { formatCount } from '@/lib/format';
 
 interface Post {
   id: string; content: string; created_at: string;
-  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean;
+  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; avatar_style?: string | null;
   like_count: number; comment_count: number; liked_by_me: boolean;
 }
 
@@ -88,7 +89,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
     <div className="border border-zinc-800 rounded-xl p-4 mb-3 hover:border-zinc-700 transition">
       <div className="flex items-center justify-between mb-1">
         <Link href={`/profile/${post.username}`} className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">{post.display_name[0]?.toUpperCase()}</div>
+          <Avatar style={post.avatar_style} username={post.username} displayName={post.display_name} size="sm" />
           <div><span className="font-medium text-sm text-white">{post.display_name}</span>{post.verified || post.role === 'admin' ? <VerifiedBadge /> : null}{post.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 ml-1 px-1.5 py-0.5 rounded-full">Admin</span>}{post.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 ml-1 px-1.5 py-0.5 rounded-full">Mod</span>}<PtsBadge pts={post.points} /></div>
         </Link>
         {currentUserId && (

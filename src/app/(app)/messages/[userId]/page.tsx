@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { Check, CheckCheck } from 'lucide-react';
 import PtsBadge from '@/components/PtsBadge';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import Avatar from '@/components/Avatar';
 import Link from 'next/link';
 
 export default function ChatPage() {
@@ -41,7 +42,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-10rem)]">
       <Link href={`/profile/${other?.username}`} className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">{other?.display_name?.[0]?.toUpperCase()}</div>
+        <Avatar style={other?.avatar_style} username={other?.username} displayName={other?.display_name} size="sm" />
         <span className="text-white font-medium text-sm">{other?.display_name}</span>
         {other?.verified || other?.role === 'admin' ? <VerifiedBadge /> : null}
         {other?.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
