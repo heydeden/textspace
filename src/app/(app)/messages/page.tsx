@@ -31,7 +31,7 @@ export default function MessagesPage() {
           {convos.map(c => (
             <Link key={c.user_id} href={`/messages/${c.user_id}`}
               className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
-              <Avatar style={c.avatar_style} username={c.username} displayName={c.display_name} size="md" />
+              <Avatar style={c.avatar_style} seed={c.avatar_seed} username={c.username} displayName={c.display_name} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="text-white font-medium text-sm">{c.display_name}</p>

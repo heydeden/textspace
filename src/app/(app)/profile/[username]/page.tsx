@@ -98,8 +98,8 @@ export default function ProfilePage() {
   return (
     <div>
       <div className="border border-zinc-800 rounded-xl p-6 mb-4 text-center">
-        <div className="mx-auto mb-3">
-          <Avatar style={profile?.avatar_style} username={profile?.username || username} displayName={profile?.display_name || username} size="lg" />
+        <div className="flex justify-center mb-3">
+          <Avatar style={profile?.avatar_style} seed={profile?.avatar_seed} username={profile?.username || username} displayName={profile?.display_name || username} size="lg" />
         </div>
         <div className="flex items-center justify-center gap-1">
           <h1 className="text-xl font-bold text-white">{profile?.display_name || username}</h1>

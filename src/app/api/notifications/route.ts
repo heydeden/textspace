@@ -9,7 +9,7 @@ export const GET = withUser(async (req, user) => {
 
   let q = `
     SELECT n.id, n.type, n.read, n.created_at,
-      a.id as actor_id, a.username, a.display_name, a.verified, a.avatar_style,
+      a.id as actor_id, a.username, a.display_name, a.verified, a.avatar_style, a.avatar_seed,
       n.post_id
     FROM notifications n
     JOIN profiles a ON n.actor_id = a.id

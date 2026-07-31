@@ -107,7 +107,7 @@ export default function CommentSection({ postId, currentUserId }: { postId: stri
       });
       if (res.ok) {
         const d = await res.json();
-        setComments(prev => [...prev, { ...d.data, user_id: currentUserId || '', username: '', display_name: '' }]);
+        setComments(prev => [...prev, d.data]);
         setContent('');
       }
     } finally { setLoading(false); }
@@ -121,7 +121,7 @@ export default function CommentSection({ postId, currentUserId }: { postId: stri
     });
     if (res.ok) {
       const d = await res.json();
-      setComments(prev => [...prev, { ...d.data, user_id: currentUserId || '', username: '', display_name: '' }]);
+      setComments(prev => [...prev, d.data]);
     }
   }
 

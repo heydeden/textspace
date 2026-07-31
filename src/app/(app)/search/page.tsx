@@ -93,7 +93,7 @@ export default function SearchPage() {
             {users.map(u => (
               <Link key={u.id} href={`/profile/${u.username}`}
                 className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
-                <Avatar style={u.avatar_style} username={u.username} displayName={u.display_name} size="md" />
+                <Avatar style={u.avatar_style} seed={u.avatar_seed} username={u.username} displayName={u.display_name} size="md" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-white font-medium text-sm">{u.display_name}</span>

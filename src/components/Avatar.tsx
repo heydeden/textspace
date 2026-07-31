@@ -8,14 +8,15 @@ const SIZES = {
   lg: 'w-16 h-16 text-2xl',
 };
 
-export default function Avatar({ style, username, displayName, size = 'sm' }: {
+export default function Avatar({ style, seed, username, displayName, size = 'sm' }: {
   style?: string | null;
+  seed?: string | null;
   username: string;
   displayName?: string;
   size?: keyof typeof SIZES;
 }) {
   const [failed, setFailed] = useState(false);
-  const cls = `${SIZES[size]} rounded-full bg-blue-600 flex items-center justify-center font-bold shrink-0`;
+  const cls = `${SIZES[size]} rounded-full bg-blue-600 inline-flex items-center justify-center font-bold shrink-0`;
   const initial = (displayName || username)[0]?.toUpperCase();
 
   if (!style || failed) {
@@ -24,13 +25,13 @@ export default function Avatar({ style, username, displayName, size = 'sm' }: {
 
   return (
     <img
-      src={avatarUrl(style, username)}
+      src={avatarUrl(style, seed || username)}
       alt={displayName || username}
       width={128}
       height={128}
       loading="lazy"
       onError={() => setFailed(true)}
-      className={`${SIZES[size]} rounded-full object-cover shrink-0 bg-zinc-800`}
+      className={`${SIZES[size]} rounded-full object-cover shrink-0 bg-zinc-800 align-middle`}
     />
   );
 }

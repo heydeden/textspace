@@ -10,7 +10,7 @@ export const GET = withUser(async (req, user) => {
 
   const rows = await sql`
     SELECT c.id, c.content, c.created_at, c.parent_id,
-      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.avatar_style
+      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.avatar_style, u.avatar_seed
     FROM comments c
     JOIN profiles u ON c.user_id = u.id
     WHERE c.post_id = ${post_id} AND u.banned = false
@@ -42,9 +42,14 @@ export const POST = withUser(async (req, user) => {
   }
 
   const rows = await sql`
-    INSERT INTO comments (post_id, user_id, content, parent_id)
-    VALUES (${post_id}, ${user.id}, ${content}, ${parent_id || null})
-    RETURNING id, content, created_at, parent_id
+    WITH ins AS (
+      INSERT INTO comments (post_id, user_id, content, parent_id)
+      VALUES (${post_id}, ${user.id}, ${content}, ${parent_id || null})
+      RETURNING id, content, created_at, parent_id, user_id
+    )
+    SELECT ins.id, ins.content, ins.created_at, ins.parent_id,
+      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.avatar_style, u.avatar_seed
+    FROM ins JOIN profiles u ON ins.user_id = u.id
   `;
 
   if (post[0].user_id !== user.id) {

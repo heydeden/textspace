@@ -28,7 +28,7 @@ export default function NotificationsPage() {
           {notifs.map(n => (
             <div key={n.id} className={`bg-zinc-900 border ${n.read ? 'border-zinc-800' : 'border-blue-800'} rounded-xl p-4`}>
               <div className="flex items-center gap-2">
-                <Avatar style={n.avatar_style} username={n.username} displayName={n.display_name} size="sm" />
+                <Avatar style={n.avatar_style} seed={n.avatar_seed} username={n.username} displayName={n.display_name} size="sm" />
                 <div className="text-sm text-zinc-300">
                   <Link href={`/profile/${n.username}`} className="text-white font-medium hover:underline">{n.display_name}</Link>
                   {n.verified || n.role === 'admin' ? <VerifiedBadge /> : null}

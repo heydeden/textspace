@@ -9,7 +9,7 @@ import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 
 interface Entry {
-  id: string; username: string; display_name: string; role?: string; verified?: boolean; avatar_style?: string | null;
+  id: string; username: string; display_name: string; role?: string; verified?: boolean; avatar_style?: string | null; avatar_seed?: string | null;
   points: number; post_count: number;
 }
 
@@ -41,7 +41,7 @@ export default function LeaderboardPage() {
             <Link key={u.id} href={`/profile/${u.username}`}
               className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
               <span className="w-8 text-center text-sm font-bold text-zinc-400">{medal(i)}</span>
-              <Avatar style={u.avatar_style} username={u.username} displayName={u.display_name} size="md" />
+              <Avatar style={u.avatar_style} seed={u.avatar_seed} username={u.username} displayName={u.display_name} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-white font-medium text-sm">{u.display_name}</span>
