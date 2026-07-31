@@ -28,20 +28,23 @@ export function verifyToken(token: string): UserPayload | null {
   } catch { return null; }
 }
 
-export function getSession(): UserPayload | null {
-  const token = cookies().get('session')?.value;
+export async function getSession(): Promise<UserPayload | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('session')?.value;
   if (!token) return null;
   return verifyToken(token);
 }
 
-export function setSession(user: UserPayload) {
+export async function setSession(user: UserPayload) {
   const token = createToken(user);
-  cookies().set('session', token, {
+  const cookieStore = await cookies();
+  cookieStore.set('session', token, {
     httpOnly: true, secure: true, sameSite: 'lax',
     maxAge: 7 * 86400, path: '/',
   });
 }
 
-export function clearSession() {
-  cookies().set('session', '', { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 0, path: '/' });
+export async function clearSession() {
+  const cookieStore = await cookies();
+  cookieStore.set('session', '', { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 0, path: '/' });
 }

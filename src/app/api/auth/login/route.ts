@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const valid = await verifyPassword(password, user.password_hash);
     if (!valid) return err('Invalid credentials', 401);
 
-    setSession({ id: user.id, username: user.username, display_name: user.display_name });
+    await setSession({ id: user.id, username: user.username, display_name: user.display_name });
     return ok({ id: user.id, username: user.username, display_name: user.display_name });
   } catch (e) { return err('Login failed', 500); }
 }

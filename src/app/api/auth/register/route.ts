@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       RETURNING id, username, display_name
     `;
     const user = rows[0] as unknown as UserPayload;
-    setSession(user);
+    await setSession(user);
     return ok(user, 201);
   } catch (e) { return err('Registration failed', 500); }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from './auth';
+import { getSession, type UserPayload } from './auth';
 import { sql } from './db';
 
 export function ok(data: unknown, status = 200) {
@@ -10,17 +10,17 @@ export function err(msg: string, status = 400) {
   return NextResponse.json({ success: false, error: msg }, { status });
 }
 
-export function withUser(handler: (req: Request, user: NonNullable<ReturnType<typeof getSession>>) => Promise<Response>) {
+export function withUser(handler: (req: Request, user: NonNullable<UserPayload>) => Promise<Response>) {
   return async (req: Request) => {
-    const user = getSession();
+    const user = await getSession();
     if (!user) return err('Unauthorized', 401);
     return handler(req, user);
   };
 }
 
-export function withAdmin(handler: (req: Request, user: NonNullable<ReturnType<typeof getSession>>) => Promise<Response>) {
+export function withAdmin(handler: (req: Request, user: NonNullable<UserPayload>) => Promise<Response>) {
   return async (req: Request) => {
-    const user = getSession();
+    const user = await getSession();
     if (!user) return err('Unauthorized', 401);
     const rows = await sql`SELECT role, banned FROM profiles WHERE id = ${user.id}`;
     if (rows.length === 0) return err('User not found', 404);

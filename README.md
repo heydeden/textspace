@@ -1,10 +1,11 @@
-# TextSpace
+# TextSpace Dev
 
-Text-only social media platform built with Next.js + Vercel Postgres.
+Development environment for building & testing new features.
 
-## Features
-- Text-only posts (max 280 chars)
-- Like & comment
-- Follow users
-- Profile pages
-- Mobile-first responsive
+```bash
+npm run dev    # localhost:3001
+```
+
+Database: shared Neon (same as prod). UI changes visible without DB.
+
+Guide: [TEXTSPACE_GUIDE.md](../TEXTSPACE_GUIDE.md)
