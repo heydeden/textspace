@@ -54,7 +54,7 @@ export const POST = withUser(async (req, user) => {
 
   if (post[0].user_id !== user.id) {
     await sql`UPDATE profiles SET points = points + 3 WHERE id = ${post[0].user_id}`;
-    await sql`INSERT INTO notifications (user_id, actor_id, type, post_id) VALUES (${post[0].user_id}, ${user.id}, 'comment', ${post_id})`;
+    await sql`INSERT INTO notifications (user_id, actor_id, type, post_id, reference_id) VALUES (${post[0].user_id}, ${user.id}, 'comment', ${post_id}, ${rows[0].id})`;
   }
 
   return ok(rows[0], 201);
@@ -93,6 +93,7 @@ export const DELETE = withUser(async (req, user) => {
   }
 
   await sql`DELETE FROM comments WHERE id = ${comment_id} OR parent_id = ${comment_id} OR parent_id IN (SELECT id FROM comments WHERE parent_id = ${comment_id})`;
+  await sql`DELETE FROM notifications WHERE reference_id = ${comment_id} OR reference_id IN (SELECT id FROM comments WHERE parent_id = ${comment_id})`;
   return ok({ deleted: true });
 });
 

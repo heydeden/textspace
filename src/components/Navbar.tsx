@@ -25,7 +25,7 @@ export default function Navbar({ username }: { username?: string }) {
       fetch('/api/messages').then(r => r.json()).then(d => {
         if (d.data?.unread !== undefined) setMsgUnread(d.data.unread);
       });
-    }, 15000);
+    }, 8000);
     return () => clearInterval(interval);
   }, [username]);
 

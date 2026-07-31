@@ -95,10 +95,9 @@ export default function SettingsPage() {
             {AVATAR_CATEGORIES.map(cat => (
               <div key={cat.name}>
                 <p className="text-zinc-400 text-xs font-semibold mb-2">{cat.name} ({cat.styles.length} style)</p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-6 gap-2">
                   {cat.styles.map(s => (
-                    <div key={s} className="space-y-2">
-                      <p className="text-[9px] text-zinc-600 text-center truncate" title={s}>{s}</p>
+                    <div key={s} className="space-y-1.5">
                       {Array.from({ length: VARIANTS }).map((_, v) => {
                         const seed = variantSeed(username, v);
                         const active = selected(s, seed);

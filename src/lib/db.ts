@@ -91,6 +91,7 @@ export async function initDB() {
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT false`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_style VARCHAR(30) DEFAULT NULL`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_seed VARCHAR(50) DEFAULT NULL`;
+  await db`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS reference_id UUID DEFAULT NULL`;
   await db`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at DESC)`;
   await db`CREATE INDEX IF NOT EXISTS idx_messages_users ON messages(sender_id, receiver_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_reports_resolved ON reports(resolved)`;

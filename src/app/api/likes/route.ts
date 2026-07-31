@@ -18,6 +18,7 @@ export const POST = withUser(async (req, user) => {
   if (existing.length > 0) {
     if (post[0].user_id !== user.id) {
       await sql`UPDATE profiles SET points = GREATEST(0, points - 2) WHERE id = ${post[0].user_id}`;
+      await sql`DELETE FROM notifications WHERE type = 'like' AND user_id = ${post[0].user_id} AND actor_id = ${user.id} AND post_id = ${post_id}`;
     }
     await sql`DELETE FROM likes WHERE user_id = ${user.id} AND post_id = ${post_id}`;
     return ok({ liked: false });

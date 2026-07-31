@@ -4,16 +4,26 @@ import Link from 'next/link';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import Avatar from '@/components/Avatar';
 
+const POLL_MS = 8000;
+
 export default function NotificationsPage() {
   const [notifs, setNotifs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch('/api/notifications').then(r => r.json()).then(d => {
+  async function load() {
+    const res = await fetch('/api/notifications');
+    if (res.ok) {
+      const d = await res.json();
       if (d.data) setNotifs(d.data.notifications);
-      setLoading(false);
-    });
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
     fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) });
+    const interval = setInterval(load, POLL_MS);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div className="text-center text-zinc-500 py-8">Loading...</div>;
@@ -35,6 +45,7 @@ export default function NotificationsPage() {
                   {n.type === 'like' && <> liked your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
                   {n.type === 'comment' && <> commented on your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
                   {n.type === 'follow' && <> followed you</>}
+                  {!['like', 'comment', 'follow'].includes(n.type) && <> interacted with you</>}
                 </div>
               </div>
             </div>
