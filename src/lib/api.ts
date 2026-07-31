@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { getSession, type UserPayload } from './auth';
 import { sql } from './db';
 
+const NO_STORE: HeadersInit = { 'Cache-Control': 'private, no-store' };
+
 export function ok(data: unknown, status = 200) {
-  return NextResponse.json({ success: true, data }, { status });
+  return NextResponse.json({ success: true, data }, { status, headers: NO_STORE });
 }
 
 export function err(msg: string, status = 400) {
-  return NextResponse.json({ success: false, error: msg }, { status });
+  return NextResponse.json({ success: false, error: msg }, { status, headers: NO_STORE });
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
