@@ -34,6 +34,10 @@ export default function Navbar({ username }: { username?: string }) {
     window.location.href = '/';
   }
 
+  function openComposer() {
+    window.dispatchEvent(new Event('open-composer'));
+  }
+
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 z-50 md:hidden">
@@ -42,7 +46,7 @@ export default function Navbar({ username }: { username?: string }) {
             <Home className="w-5 h-5" /><span>Feed</span>
           </Link>
           <div className="flex items-center justify-center">
-            <Link href="/feed" className="w-11 h-11 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold -mt-5 shadow-lg shadow-blue-600/30 active:scale-95 transition">+</Link>
+            <button onClick={openComposer} className="w-11 h-11 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold -mt-5 shadow-lg shadow-blue-600/30 active:scale-95 transition">+</button>
           </div>
           {username ? (
             <button onClick={() => setMenuOpen(true)} className="flex flex-col items-center justify-center text-zinc-500 hover:text-white text-[10px] gap-0.5 transition relative">
@@ -94,7 +98,7 @@ export default function Navbar({ username }: { username?: string }) {
                 <Link href="/messages" className="text-sm text-zinc-500 hover:text-white">Messages</Link>
                 <Link href="/settings" className="text-sm text-zinc-500 hover:text-white">Settings</Link>
                 <button onClick={handleLogout} className="text-sm text-zinc-500 hover:text-red-400">Logout</button>
-                <Link href="/feed" className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-1.5 rounded-full transition">+ Post</Link>
+                <button onClick={openComposer} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-1.5 rounded-full transition">+ Post</button>
               </>
             ) : (
               <Link href="/" className="text-sm text-blue-500">Login</Link>

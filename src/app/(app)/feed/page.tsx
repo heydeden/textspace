@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Flame } from 'lucide-react';
 import PostCard from '@/components/PostCard';
-import PostForm from '@/components/PostForm';
 
 export default function FeedPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -29,6 +28,13 @@ export default function FeedPage() {
 
   useEffect(() => { loadPosts(); }, [tab]);
 
+  useEffect(() => {
+    const handler = () => loadPosts();
+    window.addEventListener('post-created', handler);
+    return () => window.removeEventListener('post-created', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   return (
     <div>
       <div className="flex border-b border-zinc-800 mb-4">
@@ -36,8 +42,6 @@ export default function FeedPage() {
         <button onClick={() => setTab('trending')} className={`flex-1 pb-3 text-sm font-medium transition inline-flex items-center justify-center gap-1 ${tab === 'trending' ? 'text-white border-b-2 border-blue-500' : 'text-zinc-500'}`}><Flame className="w-4 h-4 text-orange-400" />Trending</button>
         <button onClick={() => setTab('following')} className={`flex-1 pb-3 text-sm font-medium transition ${tab === 'following' ? 'text-white border-b-2 border-blue-500' : 'text-zinc-500'}`}>Following</button>
       </div>
-
-      {tab === 'latest' && <PostForm onPost={() => loadPosts()} />}
 
       {loading ? (
         <div className="flex flex-col items-center py-16 text-zinc-500">

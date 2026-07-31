@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import Navbar from '@/components/Navbar';
+import PostComposer from '@/components/PostComposer';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession();
@@ -8,6 +9,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <Navbar username={user.username} />
+      <PostComposer />
       <main className="max-w-xl mx-auto px-4 py-4">
         {children}
       </main>
