@@ -74,8 +74,8 @@ export default function AdminUsers() {
 
   async function setPoints(userId: string, value: string) {
     setMessage('');
-    const pts = parseInt(value, 10);
-    if (isNaN(pts) || pts < 0 || pts > 1000000) { setMessage('Points must be integer 0-1000000'); return; }
+    const pts = Number(value);
+    if (value.trim() === '' || !Number.isInteger(pts) || pts < 0 || pts > 1000000) { setMessage('Points must be integer 0-1000000'); return; }
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
