@@ -1,8 +1,8 @@
 export function formatCount(n: number | string): string {
   const num = Number(n);
   if (isNaN(num)) return String(n);
-  if (num < 1000) return String(num);
   const abs = Math.abs(num);
+  if (abs < 1000) return String(num);
   const sign = num < 0 ? '-' : '';
   let value: number;
   let suffix: string;

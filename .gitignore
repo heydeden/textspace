@@ -5,3 +5,7 @@ node_modules/
 *.local
 react-19.2.8.tgz
 tsconfig.tsbuildinfo
+
+# testing
+test-results/
+playwright-report/
