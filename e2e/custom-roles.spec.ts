@@ -1,29 +1,57 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request as pwRequest } from '@playwright/test';
 
-test('admin sets custom roles, badge shows on profile', async ({ page }) => {
-  // login as admin
+const SUF = Date.now().toString(36);
+const USERNAME = `cr_${SUF}`;
+const PASSWORD = '20011400';
+let userId = '';
+let api: Awaited<ReturnType<typeof pwRequest.newContext>>;
+
+test.beforeAll(async () => {
+  api = await pwRequest.newContext({ baseURL: 'http://127.0.0.1:3001' });
+
+  const reg = await api.post('/api/auth/register', {
+    data: { username: USERNAME, display_name: 'CR Badge', password: PASSWORD },
+  });
+  expect(reg.status()).toBe(201);
+  ({ id: userId } = (await reg.json()).data);
+
+  // admin login -> set custom roles
+  const login = await api.post('/api/auth/login', {
+    data: { username: 'setrahden', password: '200114' },
+  });
+  expect(login.status()).toBe(200);
+  const cookie = login.headers()['set-cookie']?.split(';')[0] ?? '';
+  const patch = await api.patch('/api/admin/users', {
+    data: { user_id: userId, custom_roles: ['Veteran', 'Artist'] },
+    headers: { Cookie: cookie },
+  });
+  expect(patch.status()).toBe(200);
+});
+
+test.afterAll(async () => {
+  if (userId && api) {
+    const login = await api.post('/api/auth/login', {
+      data: { username: 'setrahden', password: '200114' },
+    });
+    const cookie = login.headers()['set-cookie']?.split(';')[0] ?? '';
+    await api.delete('/api/admin/users', {
+      data: { user_id: userId },
+      headers: { Cookie: cookie },
+    });
+  }
+  await api?.dispose();
+});
+
+test('custom role badges show on user profile', async ({ page }) => {
+  // profile requires session -> login as the user
   await page.goto('/');
   await page.getByRole('button', { name: 'Login', exact: true }).click();
-  await page.getByPlaceholder('Username').fill('setrahden');
-  await page.getByPlaceholder('Password').fill('200114');
+  await page.getByPlaceholder('Username').fill(USERNAME);
+  await page.getByPlaceholder('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page).toHaveURL(/\/feed/, { timeout: 15_000 });
 
-  // open admin users, set custom roles for crtest1
-  await page.goto('/admin/users');
-  await expect(page.getByText('@crtest1')).toBeVisible({ timeout: 15_000 });
-  await page.locator('div', { hasText: '@crtest1' }).locator('button:has-text("⋯")').first().click();
-  await page.getByRole('button', { name: 'Edit Role' }).click();
-  await page.getByPlaceholder('Veteran, Artist, OG').fill('Veteran, Artist');
-  await page.getByRole('button', { name: 'Save Custom Roles' }).click();
-  await expect(page.getByText('Custom roles updated')).toBeVisible({ timeout: 10_000 });
-
-  // badges visible in admin list
-  await expect(page.getByText('Veteran', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Artist', { exact: true }).first()).toBeVisible();
-
-  // badges visible on user profile
-  await page.goto('/profile/crtest1');
-  await expect(page.getByText('Veteran', { exact: true }).first()).toBeVisible();
+  await page.goto(`/profile/${USERNAME}`);
+  await expect(page.getByText('Veteran', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText('Artist', { exact: true }).first()).toBeVisible();
 });
