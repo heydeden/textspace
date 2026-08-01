@@ -5,10 +5,16 @@ const SUF = Date.now().toString(36);
 const NAME = `Efx ${SUF}`;
 let effectId = '';
 let bounceId = '';
+let originalEffectId: string | null = null;
 
 test.beforeAll(async () => {
   const api = await getApi();
   const cookie = await adminCookie();
+
+  // simpan state awal admin (restore di afterAll — jangan timpa migrasi prod)
+  const me = await api.get('/api/auth/me', { headers: { Cookie: cookie } });
+  const adminId = (await me.json()).data.id;
+  originalEffectId = (await me.json()).data.name_effect?.id ?? null;
 
   // admin creates custom name effect (theme + fx) and assigns to self
   const created = await api.post('/api/admin/name-effects', {
@@ -26,8 +32,6 @@ test.beforeAll(async () => {
   expect(b.status()).toBe(201);
   ({ id: bounceId } = (await b.json()).data);
 
-  const me = await api.get('/api/auth/me', { headers: { Cookie: cookie } });
-  const adminId = (await me.json()).data.id;
   const assign = await api.patch('/api/admin/users', {
     data: { user_id: adminId, name_effect_id: effectId },
     headers: { Cookie: cookie },
@@ -40,8 +44,9 @@ test.afterAll(async () => {
   const cookie = await adminCookie();
   const me = await api.get('/api/auth/me', { headers: { Cookie: cookie } });
   const adminId = (await me.json()).data.id;
+  // restore state awal (bukan null — bisa menimpa migrasi prod)
   await api.patch('/api/admin/users', {
-    data: { user_id: adminId, name_effect_id: null },
+    data: { user_id: adminId, name_effect_id: originalEffectId },
     headers: { Cookie: cookie },
   });
   if (effectId) {
