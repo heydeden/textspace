@@ -49,7 +49,7 @@ body { background: #000; color: #e5e7eb; }
   55% { text-shadow: 0 0 5px var(--ne-c1), 0 0 16px var(--ne-c2); }
 }
 
-.name-fx-pulse { color: var(--ne-c1); animation: name-fx-pulse 1.8s ease-in-out infinite; }
+.name-fx-pulse { display: inline-block; color: var(--ne-c1); animation: name-fx-pulse 1.8s ease-in-out infinite; }
 @keyframes name-fx-pulse {
   0%, 100% { transform: scale(1); text-shadow: 0 0 8px color-mix(in srgb, var(--ne-c2) 60%, transparent); }
   50% { transform: scale(1.05); text-shadow: 0 0 2px color-mix(in srgb, var(--ne-c2) 35%, transparent); }
@@ -87,24 +87,15 @@ body { background: #000; color: #e5e7eb; }
   60% { background-position: 100% 0; filter: brightness(0.9); }
 }
 
-.name-fx-sparkle { position: relative; }
-.name-fx-sparkle::before,
-.name-fx-sparkle::after {
-  content: '✦';
-  position: absolute;
-  top: -4px;
-  font-size: 10px;
-  opacity: 0;
-  animation: name-fx-sparkle-dot 2s ease-in-out infinite;
-}
-.name-fx-sparkle::before { left: -10px; color: var(--ne-c1); }
-.name-fx-sparkle::after { right: -10px; color: var(--ne-c2); animation-delay: 1s; }
-@keyframes name-fx-sparkle-dot {
-  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-  50% { opacity: 1; transform: scale(1.2) rotate(90deg); }
+.name-fx-sparkle { display: inline-block; animation: name-fx-sparkle 1.2s steps(2, jump-none) infinite; }
+@keyframes name-fx-sparkle {
+  0%, 100% { background-position: 0% 0; filter: brightness(1); }
+  30% { background-position: 60% 0; filter: brightness(1.6); }
+  60% { background-position: 30% 0; filter: brightness(0.85); }
 }
 
 .name-fx-rainbow {
+  display: inline-block;
   background-image: linear-gradient(90deg, #ef4444, #f59e0b, #facc15, #22c55e, #3b82f6, #8b5cf6, #ef4444);
   background-size: 200% 100%;
   background-clip: text;
@@ -119,6 +110,7 @@ body { background: #000; color: #e5e7eb; }
 }
 
 .name-fx-aurora {
+  display: inline-block;
   background-image: linear-gradient(90deg, #22d3ee, #a78bfa, #f472b6, #34d399, #22d3ee);
   background-size: 300% 100%;
   background-clip: text;
@@ -132,21 +124,21 @@ body { background: #000; color: #e5e7eb; }
   100% { background-position: 300% 0; }
 }
 
-.name-fx-bounce { color: var(--ne-c1); animation: name-fx-bounce 1.6s ease-in-out infinite; }
+.name-fx-bounce { display: inline-block; color: var(--ne-c1); animation: name-fx-bounce 1.6s ease-in-out infinite; }
 @keyframes name-fx-bounce {
   0%, 100% { transform: translateY(0); }
   40% { transform: translateY(-3px); }
   60% { transform: translateY(-1px); }
 }
 
-.name-fx-wiggle { color: var(--ne-c1); animation: name-fx-wiggle 2s ease-in-out infinite; }
+.name-fx-wiggle { display: inline-block; color: var(--ne-c1); animation: name-fx-wiggle 2s ease-in-out infinite; }
 @keyframes name-fx-wiggle {
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(-3deg); }
   75% { transform: rotate(3deg); }
 }
 
-.name-fx-pop { color: var(--ne-c1); animation: name-fx-pop 1.4s ease-in-out infinite; }
+.name-fx-pop { display: inline-block; color: var(--ne-c1); animation: name-fx-pop 1.4s ease-in-out infinite; }
 @keyframes name-fx-pop {
   0%, 100% { transform: scale(1); }
   20% { transform: scale(1.12); }
@@ -162,12 +154,11 @@ body { background: #000; color: #e5e7eb; }
     filter: none;
     transform: none;
   }
-  .name-fx-shimmer, .name-fx-fire, .name-fx-lightning, .name-fx-rainbow, .name-fx-aurora {
+  .name-fx-shimmer, .name-fx-fire, .name-fx-lightning, .name-fx-rainbow, .name-fx-aurora, .name-fx-sparkle {
     background-position: 0 0;
   }
   .name-fx-glow { text-shadow: 0 0 10px var(--ne-c2); }
   .name-fx-neon { text-shadow: 0 0 10px var(--ne-c2); }
-  .name-fx-sparkle::before, .name-fx-sparkle::after { display: none; }
 }
 
 /* Badge effects (admin-defined badges — profiles via user_badges/badges) */
@@ -177,7 +168,7 @@ body { background: #000; color: #e5e7eb; }
   50% { box-shadow: 0 0 8px 2px rgba(255,255,255,0.5); }
 }
 
-.badge-effect-pulse { animation: badge-pulse 1.8s ease-in-out infinite; }
+.badge-effect-pulse { display: inline-block; animation: badge-pulse 1.8s ease-in-out infinite; }
 @keyframes badge-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.08); }
@@ -229,33 +220,33 @@ body { background: #000; color: #e5e7eb; }
   60% { box-shadow: 0 0 5px 0 currentColor; }
 }
 
-.badge-effect-rainbow { animation: badge-rainbow 3s linear infinite; }
+.badge-effect-rainbow { display: inline-block; animation: badge-rainbow 3s linear infinite; }
 @keyframes badge-rainbow {
   0% { filter: hue-rotate(0deg); }
   100% { filter: hue-rotate(360deg); }
 }
 
-.badge-effect-aurora { animation: badge-aurora 4s ease-in-out infinite; }
+.badge-effect-aurora { display: inline-block; animation: badge-aurora 4s ease-in-out infinite; }
 @keyframes badge-aurora {
   0%, 100% { filter: hue-rotate(0deg) brightness(1); }
   50% { filter: hue-rotate(40deg) brightness(1.2); }
 }
 
-.badge-effect-bounce { animation: badge-bounce 1.6s ease-in-out infinite; }
+.badge-effect-bounce { display: inline-block; animation: badge-bounce 1.6s ease-in-out infinite; }
 @keyframes badge-bounce {
   0%, 100% { transform: translateY(0); }
   40% { transform: translateY(-2px); }
   60% { transform: translateY(-1px); }
 }
 
-.badge-effect-wiggle { animation: badge-wiggle 2s ease-in-out infinite; }
+.badge-effect-wiggle { display: inline-block; animation: badge-wiggle 2s ease-in-out infinite; }
 @keyframes badge-wiggle {
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(-4deg); }
   75% { transform: rotate(4deg); }
 }
 
-.badge-effect-pop { animation: badge-pop 1.4s ease-in-out infinite; }
+.badge-effect-pop { display: inline-block; animation: badge-pop 1.4s ease-in-out infinite; }
 @keyframes badge-pop {
   0%, 100% { transform: scale(1); }
   20% { transform: scale(1.15); }
