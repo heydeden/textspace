@@ -56,7 +56,6 @@ export const PATCH = withAdmin(async (req, user) => {
     params.push(points);
   }
   if (verified !== undefined) {
-    if (user_id === user.id) return err('Cannot verify yourself', 403);
     if (typeof verified !== 'boolean') return err('verified must be boolean');
     updates.push(`verified = $${idx++}`);
     params.push(verified);

@@ -38,14 +38,15 @@ export default function AdminUsers() {
 
   useEffect(() => { loadUsers(); }, [page]);
 
-  async function changeRole(userId: string, role: string) {
+  async function saveRole(userId: string) {
+    const custom_roles = customRolesInput.split(',').map(s => s.trim()).filter(Boolean);
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, role }),
+      body: JSON.stringify({ user_id: userId, role: roleInput, custom_roles }),
     });
     const d = await res.json();
-    if (d.success) { setMessage('Role updated'); loadUsers(); }
+    if (d.success) { setMessage('Role & custom roles updated'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
     setMenuFor(null);
@@ -118,18 +119,6 @@ export default function AdminUsers() {
     setMenuFor(null);
   };
 
-  async function changeCustomRoles(userId: string, raw: string) {
-    const custom_roles = raw.split(',').map(s => s.trim()).filter(Boolean);
-    const res = await fetch('/api/admin/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, custom_roles }),
-    });
-    const d = await res.json();
-    if (d.success) { setMessage('Custom roles updated'); loadUsers(); }
-    else setMessage(d.error);
-  }
-
   const isSelf = (id: string) => id === currentUserId;
   const target = action ? users.find(u => u.id === action.userId) : null;
 
@@ -200,15 +189,11 @@ export default function AdminUsers() {
                     <>
                       <div className="fixed inset-0 z-30" onClick={() => setMenuFor(null)} />
                       <div className="absolute right-0 top-full z-40 mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
-                        {!isSelf(u.id) && (
-                          <button onClick={() => toggleVerify(u.id, !!u.verified)} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.verified ? 'text-zinc-400' : 'text-sky-400'}`}>
-                            {u.verified ? 'Unverify' : 'Verify'}
-                          </button>
-                        )}
+                        <button onClick={() => toggleVerify(u.id, !!u.verified)} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.verified ? 'text-zinc-400' : 'text-sky-400'}`}>
+                          {u.verified ? 'Unverify' : 'Verify'}
+                        </button>
                         <button onClick={() => openAction('points', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Points</button>
-                        {!isSelf(u.id) && (
-                          <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>
-                        )}
+                        <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>
                         {!isSelf(u.id) && (
                           <button onClick={() => openAction(u.banned ? 'unban' : 'ban', u)}
                             className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.banned ? 'text-green-400' : 'text-red-400'}`}>
@@ -256,17 +241,15 @@ export default function AdminUsers() {
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
             <h3 className="text-white font-semibold text-lg mb-1">Edit Role</h3>
             <p className="text-zinc-500 text-xs mb-4">@{action.username}</p>
-            <select value={roleInput} onChange={e => setRoleInput(e.target.value)} autoFocus
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+            <p className="text-zinc-400 text-xs mb-1 font-medium">Role</p>
+            <select value={roleInput} onChange={e => setRoleInput(e.target.value)} autoFocus disabled={isSelf(action.userId)}
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="user">User</option>
               <option value="mod">Mod</option>
               <option value="admin">Admin</option>
             </select>
-            <div className="flex justify-end gap-2 mt-3">
-              <button onClick={() => changeRole(action.userId, roleInput)}
-                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save Role</button>
-            </div>
-            <p className="text-white font-semibold text-sm mt-5 mb-1">Custom Roles</p>
+            {isSelf(action.userId) && <p className="text-zinc-600 text-xs mt-1">Role kamu terkunci (admin).</p>}
+            <p className="text-white font-semibold text-sm mt-4 mb-1">Custom Roles</p>
             <p className="text-zinc-500 text-xs mb-2">Max 5, 1-24 chars each, pisah pakai koma. Kosongkan = hapus semua.</p>
             <input value={customRolesInput} onChange={e => setCustomRolesInput(e.target.value)}
               placeholder="Veteran, Artist, OG"
@@ -276,8 +259,8 @@ export default function AdminUsers() {
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
-              <button onClick={() => changeCustomRoles(action.userId, customRolesInput)}
-                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save Custom Roles</button>
+              <button onClick={() => saveRole(action.userId)}
+                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
             </div>
           </div>
         </div>

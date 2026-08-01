@@ -70,6 +70,16 @@ S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/adm
 check "admin ban SELF" 403 "$S"
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X DELETE "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$ADMID\"}")
 check "admin delete SELF" 403 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$ADMID\",\"verified\":true}")
+check "admin verify SELF (diizinkan)" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$ADMID\",\"verified\":false}")
+check "admin unverify SELF (diizinkan)" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$ADMID\",\"custom_roles\":[\"Boss\"]}")
+check "admin set custom_roles SELF (diizinkan)" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$ADMID\",\"custom_roles\":[]}")
+check "admin clear custom_roles SELF" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$ADMID\",\"verified\":true}")
+check "restore admin verified=true" 200 "$S"
 
 echo "== 4. Boundary validasi custom_roles =="
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"custom_roles\":[\"$(printf 'x%.0s' {1..25})\"]}")
@@ -82,6 +92,10 @@ S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/adm
 check "valid role" 200 "$S"
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"custom_roles\":[]}")
 check "clear roles" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"role\":\"mod\",\"custom_roles\":[\"Combo\"]}")
+check "gabungan role+custom_roles 1 PATCH" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"role\":\"user\",\"custom_roles\":[]}")
+check "reset user + clear" 200 "$S"
 
 echo "== 5. Extra field / profile injection =="
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/profile" -H 'Content-Type: application/json' -d "{\"display_name\":\"Tester X\",\"custom_roles\":[\"Hacked\"]}")
