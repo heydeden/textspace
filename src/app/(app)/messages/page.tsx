@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import PtsBadge from '@/components/PtsBadge';
-import VerifiedBadge from '@/components/VerifiedBadge';
+import UserIdentity from '@/components/UserIdentity';
 import Avatar from '@/components/Avatar';
 
 export default function MessagesPage() {
@@ -33,13 +32,7 @@ export default function MessagesPage() {
               className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
               <Avatar style={c.avatar_style} seed={c.avatar_seed} username={c.username} displayName={c.display_name} size="md" />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-white font-medium text-sm">{c.display_name}</p>
-                  {c.verified || c.role === 'admin' ? <VerifiedBadge /> : null}
-                  {c.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
-                  {c.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
-                  <PtsBadge pts={c.points} />
-                </div>
+                <UserIdentity displayName={c.display_name} verified={c.verified} role={c.role} pts={c.points} size="md" />
                 <p className="text-zinc-500 text-xs truncate">{c.last_message}</p>
               </div>
             </Link>

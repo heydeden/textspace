@@ -5,7 +5,7 @@ export default function PtsBadge({ pts }: { pts?: number }) {
   return (
     <span
       title={`${pts} pts`}
-      className={`text-[10px] px-2 py-0.5 rounded-full ml-2 ${pointsBadgeClass(pts)}`}
+      className={`text-[10px] px-2 py-0.5 rounded-full ${pointsBadgeClass(pts)}`}
     >
       {pointsLevel(pts)}
     </span>

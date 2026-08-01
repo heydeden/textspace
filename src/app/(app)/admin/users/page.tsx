@@ -157,19 +157,23 @@ export default function AdminUsers() {
             <div key={u.id} className={`bg-zinc-900 border ${u.banned ? 'border-red-900/50' : isSelf(u.id) ? 'border-blue-900/50' : 'border-zinc-800'} rounded-xl p-4`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-medium text-sm">{u.display_name}</span>
-                    <span className="text-zinc-500 text-xs">@{u.username}</span>
-                    {isSelf(u.id) && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">You</span>}
-                    {u.role !== 'user' && (
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${u.role === 'admin' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                        {u.role}
-                      </span>
-                    )}
-                    {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
-                    {(u.verified || u.role === 'admin') && <VerifiedBadge />}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span title={u.display_name} className="text-white font-medium text-sm truncate max-w-40">{u.display_name}</span>
+                      <span className="text-zinc-500 text-xs shrink-0">@{u.username}</span>
+                      {isSelf(u.id) && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full shrink-0">You</span>}
+                      {(u.verified || u.role === 'admin') && <VerifiedBadge />}
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {u.role !== 'user' && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${u.role === 'admin' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                          {u.role}
+                        </span>
+                      )}
+                      {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
+                    </div>
+                    <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts · {u.points} pts</p>
                   </div>
-                  <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts · {u.points} pts</p>
                 </div>
                 <div className="relative">
                   <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)}

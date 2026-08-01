@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Trophy, Medal } from 'lucide-react';
 import { pointsLevel } from '@/lib/points';
-import PtsBadge from '@/components/PtsBadge';
-import VerifiedBadge from '@/components/VerifiedBadge';
+import UserIdentity from '@/components/UserIdentity';
 import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 
@@ -43,13 +42,7 @@ export default function LeaderboardPage() {
               <span className="w-8 text-center text-sm font-bold text-zinc-400">{medal(i)}</span>
               <Avatar style={u.avatar_style} seed={u.avatar_seed} username={u.username} displayName={u.display_name} size="md" />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-medium text-sm">{u.display_name}</span>
-                  {u.verified || u.role === 'admin' ? <VerifiedBadge /> : null}
-                  {u.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
-                  {u.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
-                  <PtsBadge pts={u.points} />
-                </div>
+                <UserIdentity displayName={u.display_name} verified={u.verified} role={u.role} pts={u.points} size="md" />
                 <p className="text-zinc-500 text-xs">{formatCount(u.post_count)} posts</p>
               </div>
               <div className="text-right">

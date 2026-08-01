@@ -101,11 +101,15 @@ export default function ProfilePage() {
         <div className="flex justify-center mb-3">
           <Avatar style={profile?.avatar_style} seed={profile?.avatar_seed} username={profile?.username || username} displayName={profile?.display_name || username} size="lg" />
         </div>
-        <div className="flex items-center justify-center gap-1">
-          <h1 className="text-xl font-bold text-white">{profile?.display_name || username}</h1>
-          {(profile?.verified || profile?.role === 'admin') ? <VerifiedBadge /> : null}
-          {roleBadge(profile?.role)}
-          <PtsBadge pts={profile?.points} />
+        <div className="flex flex-col items-center justify-center gap-1">
+          <div className="flex items-center justify-center min-w-0">
+            <h1 title={profile?.display_name || username} className="text-xl font-bold text-white truncate max-w-64">{profile?.display_name || username}</h1>
+            {(profile?.verified || profile?.role === 'admin') ? <VerifiedBadge /> : null}
+          </div>
+          <div className="flex items-center justify-center gap-1">
+            {roleBadge(profile?.role)}
+            <PtsBadge pts={profile?.points} />
+          </div>
         </div>
         <p className="text-zinc-500 text-sm">@{username}</p>
         <p className="text-zinc-400 text-sm mt-2">{profile?.bio}</p>

@@ -2,8 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import PostCard from '@/components/PostCard';
-import PtsBadge from '@/components/PtsBadge';
-import VerifiedBadge from '@/components/VerifiedBadge';
+import UserIdentity from '@/components/UserIdentity';
 import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 
@@ -63,12 +62,6 @@ export default function SearchPage() {
     if (q.trim()) runSearch(q, next);
   }
 
-  const roleBadge = (role: string) => {
-    if (role === 'admin') return <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Admin</span>;
-    if (role === 'mod') return <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">Mod</span>;
-    return null;
-  };
-
   return (
     <div>
       <form onSubmit={handleSearch} className="mb-4">
@@ -95,12 +88,7 @@ export default function SearchPage() {
                 className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
                 <Avatar style={u.avatar_style} seed={u.avatar_seed} username={u.username} displayName={u.display_name} size="md" />
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-medium text-sm">{u.display_name}</span>
-                    {u.verified || u.role === 'admin' ? <VerifiedBadge /> : null}
-                    {roleBadge(u.role)}
-                      <PtsBadge pts={u.points} />
-                  </div>
+                  <UserIdentity displayName={u.display_name} verified={u.verified} role={u.role} pts={u.points} size="md" />
                   <p className="text-zinc-500 text-xs">{formatCount(u.points)} pts</p>
                 </div>
               </Link>

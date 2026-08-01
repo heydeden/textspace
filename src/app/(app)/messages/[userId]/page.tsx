@@ -2,8 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Check, CheckCheck } from 'lucide-react';
-import PtsBadge from '@/components/PtsBadge';
-import VerifiedBadge from '@/components/VerifiedBadge';
+import UserIdentity from '@/components/UserIdentity';
 import Avatar from '@/components/Avatar';
 import Link from 'next/link';
 
@@ -41,13 +40,9 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-10rem)]">
-      <Link href={`/profile/${other?.username}`} className="flex items-center gap-2 mb-4">
+      <Link href={`/profile/${other?.username}`} className="flex items-center gap-2 mb-4 min-w-0">
         <Avatar style={other?.avatar_style} seed={other?.avatar_seed} username={other?.username} displayName={other?.display_name} size="sm" />
-        <span className="text-white font-medium text-sm">{other?.display_name}</span>
-        {other?.verified || other?.role === 'admin' ? <VerifiedBadge /> : null}
-        {other?.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
-        {other?.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
-        <PtsBadge pts={other?.points} />
+        <UserIdentity displayName={other?.display_name || ''} verified={other?.verified} role={other?.role} pts={other?.points} />
       </Link>
 
       <div className="flex-1 overflow-y-auto space-y-3 mb-4">

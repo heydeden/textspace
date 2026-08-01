@@ -2,9 +2,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Heart, MessageCircle, Link2 } from 'lucide-react';
-import PtsBadge from './PtsBadge';
-import VerifiedBadge from './VerifiedBadge';
 import Avatar from './Avatar';
+import UserIdentity from './UserIdentity';
 import ConfirmModal from './ConfirmModal';
 import { formatCount } from '@/lib/format';
 
@@ -88,9 +87,9 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
   return (
     <div className="border border-zinc-800 rounded-xl p-4 mb-3 hover:border-zinc-700 transition">
       <div className="flex items-center justify-between mb-1">
-        <Link href={`/profile/${post.username}`} className="flex items-center gap-2">
+        <Link href={`/profile/${post.username}`} className="flex items-center gap-2 min-w-0">
           <Avatar style={post.avatar_style} seed={post.avatar_seed} username={post.username} displayName={post.display_name} size="sm" />
-          <div><span className="font-medium text-sm text-white">{post.display_name}</span>{post.verified || post.role === 'admin' ? <VerifiedBadge /> : null}{post.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 ml-1 px-1.5 py-0.5 rounded-full">Admin</span>}{post.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 ml-1 px-1.5 py-0.5 rounded-full">Mod</span>}<PtsBadge pts={post.points} /></div>
+          <UserIdentity displayName={post.display_name} verified={post.verified} role={post.role} pts={post.points} />
         </Link>
         {currentUserId && (
           <div className="relative">

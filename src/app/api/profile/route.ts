@@ -38,9 +38,13 @@ export const GET = async (req: Request) => {
 };
 
 export const PATCH = withUser(async (req, user) => {
-  const { display_name, bio, avatar_style, avatar_seed } = await req.json();
-  if (display_name !== undefined && (display_name.length < 1 || display_name.length > 50)) {
-    return err('Display name 1-50 characters');
+  let { display_name, bio, avatar_style, avatar_seed } = await req.json();
+  if (display_name !== undefined) {
+    const cleanName = display_name.trim();
+    if (cleanName.length < 1 || cleanName.length > 16) {
+      return err('Display name 1-16 characters');
+    }
+    display_name = cleanName;
   }
   if (bio !== undefined && bio.length > 200) return err('Bio max 200 characters');
   if (avatar_style !== undefined && !isValidAvatarStyle(avatar_style)) {

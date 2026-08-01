@@ -125,7 +125,7 @@ export default function SettingsPage() {
           <input
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
-            maxLength={50}
+            maxLength={16}
             className="w-full bg-neutral-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-blue-500 transition"
           />
         </div>

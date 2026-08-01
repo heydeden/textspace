@@ -37,15 +37,19 @@ export default function NotificationsPage() {
         <div className="space-y-2">
           {notifs.map(n => (
             <div key={n.id} className={`bg-zinc-900 border ${n.read ? 'border-zinc-800' : 'border-blue-800'} rounded-xl p-4`}>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <Avatar style={n.avatar_style} seed={n.avatar_seed} username={n.username} displayName={n.display_name} size="sm" />
-                <div className="text-sm text-zinc-300">
-                  <Link href={`/profile/${n.username}`} className="text-white font-medium hover:underline">{n.display_name}</Link>
-                  {n.verified || n.role === 'admin' ? <VerifiedBadge /> : null}
-                  {n.type === 'like' && <> liked your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
-                  {n.type === 'comment' && <> commented on your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
-                  {n.type === 'follow' && <> followed you</>}
-                  {!['like', 'comment', 'follow'].includes(n.type) && <> interacted with you</>}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <Link href={`/profile/${n.username}`} title={n.display_name} className="text-white font-medium hover:underline truncate max-w-40">{n.display_name}</Link>
+                    {n.verified || n.role === 'admin' ? <VerifiedBadge /> : null}
+                  </div>
+                  <div className="text-sm text-zinc-300">
+                    {n.type === 'like' && <>liked your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
+                    {n.type === 'comment' && <>commented on your <Link href={`/post/${n.post_id}`} className="text-blue-400 hover:underline">post</Link></>}
+                    {n.type === 'follow' && <>followed you</>}
+                    {!['like', 'comment', 'follow'].includes(n.type) && <>interacted with you</>}
+                  </div>
                 </div>
               </div>
             </div>

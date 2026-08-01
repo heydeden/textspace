@@ -50,7 +50,8 @@ export default function Home() {
             <input
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
-              placeholder="Display name"
+              placeholder="Display name (max 16)"
+              maxLength={16}
               required
               className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-blue-600"
             />

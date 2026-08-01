@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
-import PtsBadge from './PtsBadge';
-import VerifiedBadge from './VerifiedBadge';
+import UserIdentity from './UserIdentity';
 import ConfirmModal from './ConfirmModal';
 
 interface Comment {
@@ -28,13 +27,7 @@ function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent
   return (
     <div className={`border-b border-zinc-800 py-2 last:border-0 ${indent ? 'ml-6 border-l border-zinc-800 pl-3' : ''}`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className="font-medium text-sm text-white">{comment.display_name}</span>
-          {comment.verified || comment.role === 'admin' ? <VerifiedBadge /> : null}
-          {comment.role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
-          {comment.role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
-          <PtsBadge pts={comment.points} />
-        </div>
+        <UserIdentity displayName={comment.display_name} verified={comment.verified} role={comment.role} pts={comment.points} />
         <div className="flex items-center gap-2">
           {currentUserId && !isOwn && !indent && (
             <button onClick={() => { setReplying(!replying); setReplyContent(''); }} className="text-zinc-600 hover:text-blue-400 text-xs">Reply</button>
