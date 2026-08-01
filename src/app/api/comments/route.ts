@@ -10,7 +10,7 @@ export const GET = withUser(async (req, user) => {
 
   const rows = await sql`
     SELECT c.id, c.content, c.created_at, c.parent_id,
-      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.custom_roles, u.avatar_style, u.avatar_seed
+      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.custom_roles, u.name_effect, u.avatar_style, u.avatar_seed
     FROM comments c
     JOIN profiles u ON c.user_id = u.id
     WHERE c.post_id = ${post_id} AND u.banned = false
@@ -48,7 +48,7 @@ export const POST = withUser(async (req, user) => {
       RETURNING id, content, created_at, parent_id, user_id
     )
     SELECT ins.id, ins.content, ins.created_at, ins.parent_id,
-      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.custom_roles, u.avatar_style, u.avatar_seed
+      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.custom_roles, u.name_effect, u.avatar_style, u.avatar_seed
     FROM ins JOIN profiles u ON ins.user_id = u.id
   `;
 

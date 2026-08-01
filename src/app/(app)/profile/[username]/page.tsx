@@ -8,6 +8,7 @@ import CustomRoleBadge from '@/components/CustomRoleBadge';
 import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 import { pointsLevel } from '@/lib/points';
+import { nameEffectClass } from '@/lib/nameEffects';
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -94,6 +95,8 @@ export default function ProfilePage() {
     }
   };
 
+  const nameEffect = nameEffectClass(profile?.name_effect);
+
   if (loading) return <div className="text-center text-zinc-500 py-8">Loading...</div>;
 
   return (
@@ -104,7 +107,7 @@ export default function ProfilePage() {
         </div>
         <div className="flex flex-col items-center justify-center gap-1">
           <div className="flex items-center justify-center min-w-0">
-            <h1 title={profile?.display_name || username} className="text-xl font-bold text-white truncate max-w-64">{profile?.display_name || username}</h1>
+            <h1 title={profile?.display_name || username} className={`text-xl font-bold text-white truncate max-w-64 ${nameEffect ? `effect-name ${nameEffect}` : ''}`}>{profile?.display_name || username}</h1>
             {(profile?.verified || profile?.role === 'admin') ? <VerifiedBadge /> : null}
           </div>
           <div className="flex items-center justify-center gap-1 flex-wrap">

@@ -4,8 +4,9 @@ import ConfirmModal from '@/components/ConfirmModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import CustomRoleBadge from '@/components/CustomRoleBadge';
 import { formatCount } from '@/lib/format';
+import { NAME_EFFECTS, nameEffectClass } from '@/lib/nameEffects';
 
-type ActionType = 'points' | 'role' | 'ban' | 'unban' | 'delete';
+type ActionType = 'points' | 'role' | 'effect' | 'ban' | 'unban' | 'delete';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
@@ -19,6 +20,7 @@ export default function AdminUsers() {
   const [pointsInput, setPointsInput] = useState('');
   const [roleInput, setRoleInput] = useState('user');
   const [customRolesInput, setCustomRolesInput] = useState('');
+  const [effectInput, setEffectInput] = useState('none');
   const [currentUserId, setCurrentUserId] = useState('');
 
   useEffect(() => {
@@ -47,6 +49,20 @@ export default function AdminUsers() {
     });
     const d = await res.json();
     if (d.success) { setMessage('Role & custom roles updated'); loadUsers(); }
+    else setMessage(d.error);
+    setAction(null);
+    setMenuFor(null);
+  }
+
+  async function saveNameEffect(userId: string, effect: string) {
+    setMessage('');
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, name_effect: effect }),
+    });
+    const d = await res.json();
+    if (d.success) { setMessage('Name effect updated'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
     setMenuFor(null);
@@ -115,6 +131,7 @@ export default function AdminUsers() {
       setRoleInput(u.role || 'user');
       setCustomRolesInput((u.custom_roles || []).join(', '));
     }
+    if (type === 'effect') setEffectInput(u.name_effect || 'none');
     setAction({ type, userId: u.id, username: u.username });
     setMenuFor(null);
   };
@@ -165,7 +182,7 @@ export default function AdminUsers() {
                 <div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span title={u.display_name} className="text-white font-medium text-sm truncate max-w-40">{u.display_name}</span>
+                      <span title={u.display_name} className={`text-white font-medium text-sm truncate max-w-40 ${nameEffectClass(u.name_effect) ? `effect-name ${nameEffectClass(u.name_effect)}` : ''}`}>{u.display_name}</span>
                       <span className="text-zinc-500 text-xs shrink-0">@{u.username}</span>
                       {isSelf(u.id) && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full shrink-0">You</span>}
                       {(u.verified || u.role === 'admin') && <VerifiedBadge />}
@@ -194,6 +211,7 @@ export default function AdminUsers() {
                         </button>
                         <button onClick={() => openAction('points', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Points</button>
                         <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>
+                        <button onClick={() => openAction('effect', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Name Effect</button>
                         {!isSelf(u.id) && (
                           <button onClick={() => openAction(u.banned ? 'unban' : 'ban', u)}
                             className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.banned ? 'text-green-400' : 'text-red-400'}`}>
@@ -260,6 +278,29 @@ export default function AdminUsers() {
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
               <button onClick={() => saveRole(action.userId)}
+                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {action?.type === 'effect' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setAction(null)}>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-semibold text-lg mb-1">Name Effect</h3>
+            <p className="text-zinc-500 text-xs mb-4">@{action.username} — efek tampilan nama display</p>
+            <select value={effectInput} onChange={e => setEffectInput(e.target.value)} autoFocus
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500">
+              {NAME_EFFECTS.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
+            </select>
+            <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-center">
+              <span className={`text-lg font-bold ${effectInput === 'none' ? 'text-white' : `effect-name ${nameEffectClass(effectInput)}`}`}>
+                {action.username}
+              </span>
+              <p className="text-zinc-600 text-[11px] mt-2">Live preview</p>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
+              <button onClick={() => saveNameEffect(action.userId, effectInput)}
                 className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
             </div>
           </div>

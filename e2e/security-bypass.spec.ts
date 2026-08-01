@@ -1,25 +1,23 @@
-import { test, expect, request as pwRequest } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { getApi, adminCookie, disposeApi } from './helpers';
 
 const SUF = Date.now().toString(36);
 const USERNAME = `e2ebyp_${SUF}`;
 const PASSWORD = '20011400';
 
 test.afterAll(async () => {
-  const api = await pwRequest.newContext({ baseURL: 'http://127.0.0.1:3001' });
-  const login = await api.post('/api/auth/login', {
-    data: { username: 'setrahden', password: '200114' },
-  });
-  const cookie = login.headers()['set-cookie']?.split(';')[0] ?? '';
+  const api = await getApi();
+  const cookie = await adminCookie();
   const users = await api.get('/api/admin/users?q=e2ebyp&limit=50', { headers: { Cookie: cookie } });
   for (const u of (await users.json()).data?.users ?? []) {
     await api.delete('/api/admin/users', { data: { user_id: u.id }, headers: { Cookie: cookie } });
   }
-  await api.dispose();
+  await disposeApi();
 });
 
 test('non-admin cannot access admin panel or admin API', async ({ page }) => {
   // register + login as normal user via API (faster than UI)
-  const api = await pwRequest.newContext({ baseURL: 'http://127.0.0.1:3001' });
+  const api = await getApi();
   const reg = await api.post('/api/auth/register', {
     data: { username: USERNAME, display_name: 'E2E Bypass', password: PASSWORD },
   });
@@ -57,6 +55,4 @@ test('non-admin cannot access admin panel or admin API', async ({ page }) => {
     return { status: r.status };
   });
   expect(listRes.status).toBe(403);
-
-  await api.dispose();
 });

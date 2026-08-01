@@ -97,6 +97,24 @@ check "gabungan role+custom_roles 1 PATCH" 200 "$S"
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"role\":\"user\",\"custom_roles\":[]}")
 check "reset user + clear" 200 "$S"
 
+echo "== 4b. Name effect (admin-only) =="
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"lightning\"}")
+check "user set name_effect (admin-only)" 403 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"lightning\"}")
+check "admin set valid effect" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"hacker\"}")
+check "invalid effect" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"gold\",\"custom_roles\":[\"GOLDIE\"]}")
+check "gabungan effect + custom_roles 1 PATCH" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"none\",\"custom_roles\":[]}")
+check "reset effect + clear" 200 "$S"
+R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('name_effect') == 'none', d.get('name_effect'); print('  me.name_effect: none OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/profile" -H 'Content-Type: application/json' -d "{\"display_name\":\"Tester X\",\"name_effect\":\"gold\"}")
+check "profile PATCH + name_effect (diabaikan)" 200 "$S"
+R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('name_effect') == 'none', d.get('name_effect'); print('  me.name_effect setelah injection: none OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+
 echo "== 5. Extra field / profile injection =="
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/profile" -H 'Content-Type: application/json' -d "{\"display_name\":\"Tester X\",\"custom_roles\":[\"Hacked\"]}")
 check "profile PATCH + custom_roles (diabaikan)" 200 "$S"

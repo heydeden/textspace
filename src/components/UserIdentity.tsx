@@ -1,22 +1,25 @@
 import PtsBadge from './PtsBadge';
 import VerifiedBadge from './VerifiedBadge';
 import CustomRoleBadge from './CustomRoleBadge';
+import { nameEffectClass } from '@/lib/nameEffects';
 
-export default function UserIdentity({ displayName, verified, role, pts, customRoles, size = 'sm' }: {
+export default function UserIdentity({ displayName, verified, role, pts, customRoles, nameEffect, size = 'sm' }: {
   displayName: string;
   verified?: boolean;
   role?: string;
   pts?: number;
   customRoles?: string[];
+  nameEffect?: string;
   size?: 'sm' | 'md';
 }) {
   const nameWidth = size === 'md' ? 'max-w-48' : 'max-w-40';
   const nameSize = size === 'md' ? 'text-sm' : 'text-sm';
+  const effect = nameEffectClass(nameEffect);
 
   return (
     <div className="min-w-0">
       <div className="flex items-center min-w-0">
-        <span title={displayName} className={`${nameWidth} ${nameSize} font-medium text-white truncate`}>{displayName}</span>
+        <span title={displayName} className={`${nameWidth} ${nameSize} font-medium text-white truncate ${effect ? `effect-name ${effect}` : ''}`}>{displayName}</span>
         {(verified || role === 'admin') ? <VerifiedBadge /> : null}
       </div>
       <div className="flex items-center gap-1 mt-0.5 flex-wrap">

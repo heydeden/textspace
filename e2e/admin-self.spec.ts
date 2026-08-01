@@ -1,17 +1,10 @@
-import { test, expect, request as pwRequest } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { getApi, adminCookie, disposeApi } from './helpers';
 
 const SUF = Date.now().toString(36);
-let api: Awaited<ReturnType<typeof pwRequest.newContext>>;
-
-async function adminCookie() {
-  const login = await api.post('/api/auth/login', {
-    data: { username: 'setrahden', password: '200114' },
-  });
-  return login.headers()['set-cookie']?.split(';')[0] ?? '';
-}
 
 test.beforeAll(async () => {
-  api = await pwRequest.newContext({ baseURL: 'http://127.0.0.1:3001' });
+  const api = await getApi();
   const cookie = await adminCookie();
   const me = await api.get('/api/auth/me', { headers: { Cookie: cookie } });
   const { id } = (await me.json()).data;
@@ -24,16 +17,15 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  if (api) {
-    const cookie = await adminCookie();
-    const me = await api.get('/api/auth/me', { headers: { Cookie: cookie } });
-    const { id } = (await me.json()).data;
-    await api.patch('/api/admin/users', {
-      data: { user_id: id, custom_roles: [] },
-      headers: { Cookie: cookie },
-    });
-    await api.dispose();
-  }
+  const api = await getApi();
+  const cookie = await adminCookie();
+  const me = await api.get('/api/auth/me', { headers: { Cookie: cookie } });
+  const { id } = (await me.json()).data;
+  await api.patch('/api/admin/users', {
+    data: { user_id: id, custom_roles: [] },
+    headers: { Cookie: cookie },
+  });
+  await disposeApi();
 });
 
 test('admin can set custom role for self, badge shows on own profile', async ({ page }) => {
