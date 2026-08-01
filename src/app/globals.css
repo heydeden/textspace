@@ -10,115 +10,164 @@ body { background: #000; color: #e5e7eb; }
 }
 .animate-slide-up { animation: slide-up 0.25s ease-out; }
 
-/* Display name effects (admin-granted via profiles.name_effect) */
-.effect-name {
+/* Name effects — admin-defined registry (name_effects): theme = 2 warna via CSS var */
+.name-theme-violet { --ne-c1: #a78bfa; --ne-c2: #8b5cf6; }
+.name-theme-pink { --ne-c1: #f472b6; --ne-c2: #ec4899; }
+.name-theme-emerald { --ne-c1: #34d399; --ne-c2: #10b981; }
+.name-theme-orange { --ne-c1: #fb923c; --ne-c2: #f97316; }
+.name-theme-cyan { --ne-c1: #22d3ee; --ne-c2: #06b6d4; }
+.name-theme-rose { --ne-c1: #fb7185; --ne-c2: #f43f5e; }
+.name-theme-lime { --ne-c1: #a3e635; --ne-c2: #84cc16; }
+.name-theme-sky { --ne-c1: #38bdf8; --ne-c2: #0ea5e9; }
+.name-theme-fuchsia { --ne-c1: #e879f9; --ne-c2: #d946ef; }
+.name-theme-teal { --ne-c1: #2dd4bf; --ne-c2: #14b8a6; }
+.name-theme-red { --ne-c1: #f87171; --ne-c2: #ef4444; }
+.name-theme-blue { --ne-c1: #60a5fa; --ne-c2: #3b82f6; }
+.name-theme-indigo { --ne-c1: #818cf8; --ne-c2: #6366f1; }
+.name-theme-amber { --ne-c1: #fbbf24; --ne-c2: #f59e0b; }
+.name-theme-purple { --ne-c1: #c084fc; --ne-c2: #a855f7; }
+.name-theme-green { --ne-c1: #4ade80; --ne-c2: #22c55e; }
+.name-theme-gold { --ne-c1: #facc15; --ne-c2: #d4af37; }
+.name-theme-fire { --ne-c1: #fb923c; --ne-c2: #ef4444; }
+.name-theme-ocean { --ne-c1: #22d3ee; --ne-c2: #3b82f6; }
+.name-theme-violetgrad { --ne-c1: #a78bfa; --ne-c2: #d946ef; }
+
+.name-fx-none { color: var(--ne-c1); }
+
+.name-fx-glow { color: var(--ne-c1); animation: name-fx-glow 2.2s ease-in-out infinite; }
+@keyframes name-fx-glow {
+  0%, 100% { text-shadow: 0 0 4px color-mix(in srgb, var(--ne-c1) 90%, transparent), 0 0 14px color-mix(in srgb, var(--ne-c2) 60%, transparent); }
+  50% { text-shadow: 0 0 1px color-mix(in srgb, var(--ne-c1) 50%, transparent), 0 0 6px color-mix(in srgb, var(--ne-c2) 40%, transparent); }
+}
+
+.name-fx-neon { color: var(--ne-c1); animation: name-fx-neon 2s ease-in-out infinite; }
+@keyframes name-fx-neon {
+  0%, 100% { text-shadow: 0 0 5px var(--ne-c1), 0 0 16px var(--ne-c2); }
+  40% { text-shadow: 0 0 2px var(--ne-c1), 0 0 8px var(--ne-c2); }
+  45% { text-shadow: 0 0 5px var(--ne-c1), 0 0 16px var(--ne-c2); }
+  50% { text-shadow: 0 0 1px var(--ne-c1), 0 0 4px var(--ne-c2); }
+  55% { text-shadow: 0 0 5px var(--ne-c1), 0 0 16px var(--ne-c2); }
+}
+
+.name-fx-pulse { color: var(--ne-c1); animation: name-fx-pulse 1.8s ease-in-out infinite; }
+@keyframes name-fx-pulse {
+  0%, 100% { transform: scale(1); text-shadow: 0 0 8px color-mix(in srgb, var(--ne-c2) 60%, transparent); }
+  50% { transform: scale(1.05); text-shadow: 0 0 2px color-mix(in srgb, var(--ne-c2) 35%, transparent); }
+}
+
+.name-fx-shimmer,
+.name-fx-fire,
+.name-fx-lightning,
+.name-fx-sparkle {
+  background-image: linear-gradient(90deg, var(--ne-c1), #ffffff 45%, var(--ne-c2));
+  background-size: 300% 100%;
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
 }
-
-/* Lightning — biru/cyan/putih, jitter + kilat flicker */
-.name-effect-lightning {
-  background-image: linear-gradient(90deg, #38bdf8, #e0f2fe 25%, #60a5fa 50%, #e0f2fe 75%, #38bdf8);
-  background-size: 300% 100%;
-  animation: name-lightning 0.9s steps(3, jump-none) infinite;
+.name-fx-shimmer { animation: name-fx-shimmer 2.6s linear infinite; }
+@keyframes name-fx-shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: 300% 0; }
 }
-@keyframes name-lightning {
+
+.name-fx-fire { background-image: linear-gradient(0deg, var(--ne-c2), var(--ne-c1) 40%, #ffffff 70%, var(--ne-c2)); background-size: 100% 300%; animation: name-fx-fire 1.4s steps(3) infinite; }
+@keyframes name-fx-fire {
+  0% { background-position: 0 0; filter: brightness(1); }
+  33% { background-position: 0 50%; filter: brightness(1.45); }
+  66% { background-position: 0 100%; filter: brightness(0.9); }
+  100% { background-position: 0 0; filter: brightness(1); }
+}
+
+.name-fx-lightning { animation: name-fx-lightning 0.9s steps(3, jump-none) infinite; }
+@keyframes name-fx-lightning {
   0%, 100% { background-position: 0% 0; filter: brightness(1); }
   30% { background-position: 50% 0; filter: brightness(1.7); }
   60% { background-position: 100% 0; filter: brightness(0.9); }
 }
 
-/* Neon — glow ungu pulsing ala neon sign */
-.name-effect-neon {
-  color: #e879f9;
-  animation: name-neon 2.4s ease-in-out infinite;
+.name-fx-sparkle { position: relative; }
+.name-fx-sparkle::before,
+.name-fx-sparkle::after {
+  content: '✦';
+  position: absolute;
+  top: -4px;
+  font-size: 10px;
+  opacity: 0;
+  animation: name-fx-sparkle-dot 2s ease-in-out infinite;
 }
-@keyframes name-neon {
-  0%, 100% { text-shadow: 0 0 4px #e879f9, 0 0 12px #c026d3, 0 0 24px #a21caf; }
-  40% { text-shadow: 0 0 2px #e879f9, 0 0 6px #c026d3, 0 0 10px #a21caf; }
-  45% { text-shadow: 0 0 4px #e879f9, 0 0 12px #c026d3, 0 0 24px #a21caf; }
-  50% { text-shadow: 0 0 1px #e879f9, 0 0 3px #c026d3, 0 0 6px #a21caf; }
-  55% { text-shadow: 0 0 4px #e879f9, 0 0 12px #c026d3, 0 0 24px #a21caf; }
-}
-
-/* Fire — kuning/oranye/merah menyala */
-.name-effect-fire {
-  background-image: linear-gradient(0deg, #f97316, #facc15 40%, #ef4444 80%, #f97316);
-  background-size: 100% 300%;
-  animation: name-fire 1.4s steps(3) infinite;
-}
-@keyframes name-fire {
-  0% { background-position: 0 0; filter: brightness(1); }
-  33% { background-position: 0 50%; filter: brightness(1.4); }
-  66% { background-position: 0 100%; filter: brightness(0.9); }
-  100% { background-position: 0 0; filter: brightness(1); }
+.name-fx-sparkle::before { left: -10px; color: var(--ne-c1); }
+.name-fx-sparkle::after { right: -10px; color: var(--ne-c2); animation-delay: 1s; }
+@keyframes name-fx-sparkle-dot {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(90deg); }
 }
 
-/* Aurora — multi-warna bergerak halus */
-.name-effect-aurora {
+.name-fx-rainbow {
+  background-image: linear-gradient(90deg, #ef4444, #f59e0b, #facc15, #22c55e, #3b82f6, #8b5cf6, #ef4444);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: name-fx-rainbow 3s linear infinite;
+}
+@keyframes name-fx-rainbow {
+  0% { background-position: 0% 0; filter: hue-rotate(0deg); }
+  100% { background-position: 200% 0; filter: hue-rotate(360deg); }
+}
+
+.name-fx-aurora {
   background-image: linear-gradient(90deg, #22d3ee, #a78bfa, #f472b6, #34d399, #22d3ee);
   background-size: 300% 100%;
-  animation: name-aurora 4s linear infinite;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: name-fx-aurora 4s linear infinite;
 }
-@keyframes name-aurora {
+@keyframes name-fx-aurora {
   0% { background-position: 0% 0; }
   100% { background-position: 300% 0; }
 }
 
-/* Gold — shimmer metalik */
-.name-effect-gold {
-  background-image: linear-gradient(110deg, #b8860b 20%, #ffe9a8 40%, #d4af37 55%, #fff7d6 65%, #b8860b 90%);
-  background-size: 250% 100%;
-  animation: name-gold 3s linear infinite;
-}
-@keyframes name-gold {
-  0% { background-position: 100% 0; }
-  100% { background-position: 0 0; }
+.name-fx-bounce { color: var(--ne-c1); animation: name-fx-bounce 1.6s ease-in-out infinite; }
+@keyframes name-fx-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-3px); }
+  60% { transform: translateY(-1px); }
 }
 
-/* Rainbow — pelangi berputar */
-.name-effect-rainbow {
-  background-image: linear-gradient(90deg, #ef4444, #f59e0b, #facc15, #22c55e, #3b82f6, #8b5cf6, #ef4444);
-  background-size: 200% 100%;
-  animation: name-rainbow 3s linear infinite;
-}
-@keyframes name-rainbow {
-  0% { background-position: 0% 0; }
-  100% { background-position: 200% 0; }
+.name-fx-wiggle { color: var(--ne-c1); animation: name-fx-wiggle 2s ease-in-out infinite; }
+@keyframes name-fx-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
 }
 
-/* Glow — cahaya putih pulsasi halus */
-.name-effect-glow {
-  color: #fff;
-  animation: name-glow 2.6s ease-in-out infinite;
-}
-@keyframes name-glow {
-  0%, 100% { text-shadow: 0 0 6px rgba(255,255,255,0.8), 0 0 18px rgba(147,197,253,0.6); }
-  50% { text-shadow: 0 0 2px rgba(255,255,255,0.5), 0 0 8px rgba(147,197,253,0.35); }
+.name-fx-pop { color: var(--ne-c1); animation: name-fx-pop 1.4s ease-in-out infinite; }
+@keyframes name-fx-pop {
+  0%, 100% { transform: scale(1); }
+  20% { transform: scale(1.12); }
+  35% { transform: scale(0.96); }
+  50% { transform: scale(1.06); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .name-effect-lightning,
-  .name-effect-fire,
-  .name-effect-aurora,
-  .name-effect-gold,
-  .name-effect-rainbow,
-  .name-effect-neon,
-  .name-effect-glow {
+  .name-fx-glow, .name-fx-neon, .name-fx-pulse, .name-fx-shimmer,
+  .name-fx-fire, .name-fx-lightning, .name-fx-sparkle, .name-fx-rainbow,
+  .name-fx-aurora, .name-fx-bounce, .name-fx-wiggle, .name-fx-pop {
     animation: none;
     filter: none;
+    transform: none;
   }
-  .name-effect-lightning,
-  .name-effect-fire,
-  .name-effect-aurora,
-  .name-effect-gold,
-  .name-effect-rainbow {
+  .name-fx-shimmer, .name-fx-fire, .name-fx-lightning, .name-fx-rainbow, .name-fx-aurora {
     background-position: 0 0;
   }
-  .name-effect-neon { text-shadow: 0 0 12px #c026d3, 0 0 24px #a21caf; }
-  .name-effect-glow { text-shadow: 0 0 12px rgba(147,197,253,0.6); }
+  .name-fx-glow { text-shadow: 0 0 10px var(--ne-c2); }
+  .name-fx-neon { text-shadow: 0 0 10px var(--ne-c2); }
+  .name-fx-sparkle::before, .name-fx-sparkle::after { display: none; }
 }
 
 /* Badge effects (admin-defined badges — profiles via user_badges/badges) */
@@ -192,6 +241,35 @@ body { background: #000; color: #e5e7eb; }
   50% { filter: hue-rotate(40deg) brightness(1.2); }
 }
 
+.badge-effect-bounce { animation: badge-bounce 1.6s ease-in-out infinite; }
+@keyframes badge-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-2px); }
+  60% { transform: translateY(-1px); }
+}
+
+.badge-effect-wiggle { animation: badge-wiggle 2s ease-in-out infinite; }
+@keyframes badge-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-4deg); }
+  75% { transform: rotate(4deg); }
+}
+
+.badge-effect-pop { animation: badge-pop 1.4s ease-in-out infinite; }
+@keyframes badge-pop {
+  0%, 100% { transform: scale(1); }
+  20% { transform: scale(1.15); }
+  35% { transform: scale(0.95); }
+  50% { transform: scale(1.08); }
+}
+
+.badge-effect-lightning { animation: badge-lightning 0.9s steps(3, jump-none) infinite; }
+@keyframes badge-lightning {
+  0%, 100% { filter: brightness(1); }
+  30% { filter: brightness(1.8); }
+  60% { filter: brightness(0.85); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .badge-effect-glow,
   .badge-effect-pulse,
@@ -200,8 +278,13 @@ body { background: #000; color: #e5e7eb; }
   .badge-effect-fire,
   .badge-effect-neon,
   .badge-effect-rainbow,
-  .badge-effect-aurora {
+  .badge-effect-aurora,
+  .badge-effect-lightning,
+  .badge-effect-bounce,
+  .badge-effect-wiggle,
+  .badge-effect-pop {
     animation: none;
+    transform: none;
   }
   .badge-effect-shimmer::after,
   .badge-effect-sparkle::before,

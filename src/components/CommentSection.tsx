@@ -6,7 +6,7 @@ import ConfirmModal from './ConfirmModal';
 interface Comment {
   id: string; content: string; created_at: string;
   parent_id: string | null;
-  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; badges?: { id: string; name: string; theme?: string; effect?: string }[]; name_effect?: string;
+  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; badges?: { id: string; name: string; theme?: string; effect?: string }[]; name_effect?: { id: string; name?: string; theme?: string; effect?: string } | null;
 }
 
 function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent }: {

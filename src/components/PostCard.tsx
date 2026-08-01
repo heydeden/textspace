@@ -8,10 +8,11 @@ import ConfirmModal from './ConfirmModal';
 import { formatCount } from '@/lib/format';
 import { themeClasses } from '@/lib/profileThemes';
 import type { BadgeData } from './Badge';
+import type { NameEffectData } from './UserIdentity';
 
 interface Post {
   id: string; content: string; created_at: string;
-  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; badges?: BadgeData[]; name_effect?: string; theme?: string; avatar_style?: string | null; avatar_seed?: string | null;
+  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; badges?: BadgeData[]; name_effect?: NameEffectData | null; theme?: string; avatar_style?: string | null; avatar_seed?: string | null;
   like_count: number; comment_count: number; liked_by_me: boolean;
 }
 

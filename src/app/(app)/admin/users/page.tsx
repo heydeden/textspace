@@ -4,7 +4,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import Badge from '@/components/Badge';
 import { formatCount } from '@/lib/format';
-import { NAME_EFFECTS, nameEffectClass } from '@/lib/nameEffects';
+import { NAME_EFFECT_THEMES, NAME_EFFECT_FX, nameEffectClass } from '@/lib/nameEffects';
 import { PROFILE_THEMES, themeClasses, themeClassNames } from '@/lib/profileThemes';
 
 type ActionType = 'points' | 'role' | 'effect' | 'theme' | 'ban' | 'unban' | 'delete';
@@ -22,7 +22,8 @@ export default function AdminUsers() {
   const [roleInput, setRoleInput] = useState('user');
   const [badgesInput, setBadgesInput] = useState<string[]>([]);
   const [allBadges, setAllBadges] = useState<any[]>([]);
-  const [effectInput, setEffectInput] = useState('none');
+  const [allNameEffects, setAllNameEffects] = useState<any[]>([]);
+  const [nameEffectIdInput, setNameEffectIdInput] = useState('');
   const [themeInput, setThemeInput] = useState('default');
   const [currentUserId, setCurrentUserId] = useState('');
 
@@ -32,6 +33,9 @@ export default function AdminUsers() {
     });
     fetch('/api/badges').then(r => r.json()).then(d => {
       if (d.data?.badges) setAllBadges(d.data.badges);
+    }).catch(() => {});
+    fetch('/api/name-effects').then(r => r.json()).then(d => {
+      if (d.data?.nameEffects) setAllNameEffects(d.data.nameEffects);
     }).catch(() => {});
   }, []);
 
@@ -67,12 +71,12 @@ export default function AdminUsers() {
     });
   }
 
-  async function saveNameEffect(userId: string, effect: string) {
+  async function saveNameEffect(userId: string, effectId: string) {
     setMessage('');
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, name_effect: effect }),
+      body: JSON.stringify({ user_id: userId, name_effect_id: effectId || null }),
     });
     const d = await res.json();
     if (d.success) { setMessage('Name effect updated'); loadUsers(); }
@@ -158,7 +162,7 @@ export default function AdminUsers() {
       setRoleInput(u.role || 'user');
       setBadgesInput((u.badges || []).map((b: any) => b.id));
     }
-    if (type === 'effect') setEffectInput(u.name_effect || 'none');
+    if (type === 'effect') setNameEffectIdInput(u.name_effect?.id || '');
     if (type === 'theme') setThemeInput(u.theme || 'default');
     setAction({ type, userId: u.id, username: u.username });
     setMenuFor(null);
@@ -210,7 +214,7 @@ export default function AdminUsers() {
                 <div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span title={u.display_name} className={`text-white font-medium text-sm truncate max-w-40 ${nameEffectClass(u.name_effect) ? `effect-name ${nameEffectClass(u.name_effect)}` : ''}`}>{u.display_name}</span>
+                      <span title={u.name_effect?.name || u.display_name} className={`text-white font-medium text-sm truncate max-w-40 ${nameEffectClass(u.name_effect?.theme, u.name_effect?.effect)}`}>{u.display_name}</span>
                       <span className="text-zinc-500 text-xs shrink-0">@{u.username}</span>
                       {isSelf(u.id) && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full shrink-0">You</span>}
                       {(u.verified || u.role === 'admin') && <VerifiedBadge />}
@@ -332,19 +336,25 @@ export default function AdminUsers() {
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
             <h3 className="text-white font-semibold text-lg mb-1">Name Effect</h3>
             <p className="text-zinc-500 text-xs mb-4">@{action.username} — efek tampilan nama display</p>
-            <select value={effectInput} onChange={e => setEffectInput(e.target.value)} autoFocus
+            <select value={nameEffectIdInput} onChange={e => setNameEffectIdInput(e.target.value)} autoFocus
               className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500">
-              {NAME_EFFECTS.map(e => <option key={e.key} value={e.key}>{e.label}</option>)}
+              <option value="">None</option>
+              {allNameEffects.map((ne: any) => <option key={ne.id} value={ne.id}>{ne.name}</option>)}
             </select>
+            <p className="text-zinc-600 text-[11px] mt-1">Kelola efek di tab Name Effects (admin).</p>
             <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-center">
-              <span className={`text-lg font-bold ${effectInput === 'none' ? 'text-white' : `effect-name ${nameEffectClass(effectInput)}`}`}>
-                {action.username}
-              </span>
+              {(() => {
+                const ne = allNameEffects.find((x: any) => x.id === nameEffectIdInput);
+                const fx = ne ? nameEffectClass(ne.theme, ne.effect) : '';
+                return (
+                  <span className={`text-lg font-bold ${fx}`}>{action.username}</span>
+                );
+              })()}
               <p className="text-zinc-600 text-[11px] mt-2">Live preview</p>
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
-              <button onClick={() => saveNameEffect(action.userId, effectInput)}
+              <button onClick={() => saveNameEffect(action.userId, nameEffectIdInput)}
                 className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
             </div>
           </div>

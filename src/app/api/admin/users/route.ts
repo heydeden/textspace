@@ -1,7 +1,6 @@
 import { query } from '@/lib/db';
 import { ok, err, isUUID } from '@/lib/api';
 import { withAdmin } from '@/lib/api';
-import { validateNameEffect } from '@/lib/nameEffects';
 import { validateProfileTheme } from '@/lib/profileThemes';
 import { validateBadgeAssignments } from '@/lib/badges';
 
@@ -24,7 +23,8 @@ export const GET = withAdmin(async (req) => {
 
   params.push(limit, offset);
   const rows = await query(
-    `SELECT id, username, display_name, bio, role, points, banned, verified, name_effect, theme, avatar_style, created_at::text,
+    `SELECT id, username, display_name, bio, role, points, banned, verified, theme, avatar_style, created_at::text,
+      (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = profiles.name_effect_id AND ne.active = true) as name_effect,
       (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id) as badges,
       (SELECT COUNT(*)::int FROM posts WHERE user_id = profiles.id) as post_count
      FROM profiles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -34,7 +34,7 @@ export const GET = withAdmin(async (req) => {
 });
 
 export const PATCH = withAdmin(async (req, user) => {
-  const { user_id, role, banned, points, verified, name_effect, theme, badges } = await req.json();
+  const { user_id, role, banned, points, verified, name_effect_id, theme, badges } = await req.json();
   if (!user_id) return err('user_id required');
   if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
@@ -63,11 +63,18 @@ export const PATCH = withAdmin(async (req, user) => {
     updates.push(`verified = $${idx++}`);
     params.push(verified);
   }
-  if (name_effect !== undefined) {
-    const effect = validateNameEffect(name_effect);
-    if (effect === null) return err('Invalid name_effect');
-    updates.push(`name_effect = $${idx++}`);
-    params.push(effect);
+  if (name_effect_id !== undefined) {
+    if (name_effect_id === null) {
+      updates.push(`name_effect_id = $${idx++}`);
+      params.push(null);
+    } else if (typeof name_effect_id === 'string' && isUUID(name_effect_id)) {
+      const exists = await query('SELECT id FROM name_effects WHERE id = $1 AND active = true', [name_effect_id]);
+      if (exists.length === 0) return err('Name effect not found');
+      updates.push(`name_effect_id = $${idx++}`);
+      params.push(name_effect_id);
+    } else {
+      return err('Invalid name_effect_id');
+    }
   }
   if (theme !== undefined) {
     const t = validateProfileTheme(theme);

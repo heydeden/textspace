@@ -8,7 +8,7 @@ import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 
 interface Entry {
-  id: string; username: string; display_name: string; role?: string; verified?: boolean; badges?: { id: string; name: string; theme?: string; effect?: string }[]; name_effect?: string; avatar_style?: string | null; avatar_seed?: string | null;
+  id: string; username: string; display_name: string; role?: string; verified?: boolean; badges?: { id: string; name: string; theme?: string; effect?: string }[]; name_effect?: { id: string; name?: string; theme?: string; effect?: string } | null; avatar_style?: string | null; avatar_seed?: string | null;
   points: number; post_count: number;
 }
 

@@ -96,7 +96,7 @@ export default function ProfilePage() {
     }
   };
 
-  const nameEffect = nameEffectClass(profile?.name_effect);
+  const nameEffect = nameEffectClass(profile?.name_effect?.theme, profile?.name_effect?.effect);
   const theme = themeClasses(profile?.theme);
 
   if (loading) return <div className="text-center text-zinc-500 py-8">Loading...</div>;
@@ -111,7 +111,7 @@ export default function ProfilePage() {
         </div>
         <div className="flex flex-col items-center justify-center gap-1">
           <div className="flex items-center justify-center min-w-0">
-            <h1 title={profile?.display_name || username} className={`text-xl font-bold text-white truncate max-w-64 ${nameEffect ? `effect-name ${nameEffect}` : ''}`}>{profile?.display_name || username}</h1>
+            <h1 title={profile?.display_name || username} className={`text-xl font-bold text-white truncate max-w-64 ${nameEffect}`}>{profile?.display_name || username}</h1>
             {(profile?.verified || profile?.role === 'admin') ? <VerifiedBadge /> : null}
           </div>
           <div className="flex items-center justify-center gap-1 flex-wrap">

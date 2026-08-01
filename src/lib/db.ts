@@ -103,6 +103,15 @@ export async function initDB() {
     granted_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id, badge_id)
   )`;
+  await db`CREATE TABLE IF NOT EXISTS name_effects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(24) UNIQUE NOT NULL,
+    theme VARCHAR(30) DEFAULT 'violet',
+    effect VARCHAR(30) DEFAULT 'none',
+    active BOOLEAN DEFAULT true,
+    created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
   await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS read BOOLEAN DEFAULT false`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS points INT DEFAULT 0`;
@@ -111,6 +120,7 @@ export async function initDB() {
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS custom_roles TEXT[] DEFAULT '{}'`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS name_effect VARCHAR(20) DEFAULT 'none'`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS theme VARCHAR(20) DEFAULT 'default'`;
+  await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS name_effect_id UUID DEFAULT NULL`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_style VARCHAR(30) DEFAULT NULL`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_seed VARCHAR(50) DEFAULT NULL`;
   await db`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS reference_id UUID DEFAULT NULL`;

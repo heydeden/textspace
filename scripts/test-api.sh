@@ -124,23 +124,44 @@ check "gabungan role+badges 1 PATCH" 200 "$S"
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"role\":\"user\",\"badges\":[]}")
 check "reset user + clear badges" 200 "$S"
 
-echo "== 4b. Name effect (admin-only) =="
-S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"lightning\"}")
-check "user set name_effect (admin-only)" 403 "$S"
-S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"lightning\"}")
-check "admin set valid effect" 200 "$S"
-S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"hacker\"}")
+echo "== 4b. Name effects registry (admin-only) =="
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"name\":\"X\",\"theme\":\"violet\",\"effect\":\"none\"}")
+check "user POST admin/name-effects" 403 "$S"
+R=$(curl -s -H "Cookie: $ADM" -X POST "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"name\":\"Electric\",\"theme\":\"cyan\",\"effect\":\"sparkle\"}")
+NID=$(echo "$R" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
+check "create name effect valid" 201 201
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X POST "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"name\":\"\",\"theme\":\"violet\",\"effect\":\"none\"}")
+check "empty name" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X POST "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"name\":\"BadTheme\",\"theme\":\"hacker\",\"effect\":\"none\"}")
+check "invalid theme" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X POST "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"name\":\"BadFx\",\"theme\":\"violet\",\"effect\":\"explode\"}")
 check "invalid effect" 400 "$S"
-S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"gold\",\"custom_roles\":[\"GOLDIE\"]}")
-check "gabungan effect + custom_roles 1 PATCH" 200 "$S"
-S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect\":\"none\",\"custom_roles\":[]}")
-check "reset effect + clear" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X POST "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"name\":\"Electric\",\"theme\":\"cyan\",\"effect\":\"sparkle\"}")
+check "duplicate name" 409 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"effect_id\":\"$NID\",\"theme\":\"gold\",\"effect\":\"bounce\"}")
+check "patch theme+effect" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"effect_id\":\"not-a-uuid\",\"active\":false}")
+check "patch invalid effect_id" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"effect_id\":\"$NID\",\"active\":false}")
+check "deactivate effect" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect_id\":\"$NID\"}")
+check "assign NONAKTIF effect" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"effect_id\":\"$NID\",\"active\":true}")
+check "reactivate effect" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect_id\":\"$NID\"}")
+check "assign valid effect" 200 "$S"
 R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
-echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('name_effect') == 'none', d.get('name_effect'); print('  me.name_effect: none OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
-S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/profile" -H 'Content-Type: application/json' -d "{\"display_name\":\"Tester X\",\"name_effect\":\"gold\"}")
-check "profile PATCH + name_effect (diabaikan)" 200 "$S"
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; ne=d.get('name_effect') or {}; assert ne.get('id') == '$NID' and ne.get('theme') == 'gold' and ne.get('effect') == 'bounce', ne; print('  me.name_effect: Electric gold/bounce OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect_id\":null}")
+check "clear effect (null)" 200 "$S"
 R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
-echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('name_effect') == 'none', d.get('name_effect'); print('  me.name_effect setelah injection: none OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('name_effect') is None, d.get('name_effect'); print('  me.name_effect: null OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"name_effect_id\":\"bogus\"}")
+check "invalid uuid assign" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/profile" -H 'Content-Type: application/json' -d "{\"display_name\":\"Tester X\",\"name_effect_id\":\"$NID\"}")
+check "profile PATCH + name_effect_id (diabaikan)" 200 "$S"
+R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('name_effect') is None, d.get('name_effect'); print('  me.name_effect setelah injection: null OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
 
 echo "== 4c. Profile theme (admin-only) =="
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"theme\":\"crimson\"}")
@@ -180,6 +201,7 @@ curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/users" -H 'Content
 curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID2\"}"
 curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/badges" -H 'Content-Type: application/json' -d "{\"badge_id\":\"$BID\"}"
 curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/badges" -H 'Content-Type: application/json' -d "{\"badge_id\":\"$OID\"}"
+curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"effect_id\":\"$NID\"}"
 
 kill $SERVER_PID 2>/dev/null
 pkill -f "next dev -p $PORT" 2>/dev/null

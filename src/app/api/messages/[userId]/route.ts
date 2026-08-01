@@ -8,7 +8,8 @@ export const GET = withUser(async (req, user) => {
   if (!userId) return err('user_id required');
   if (!isUUID(userId)) return err('Invalid user_id');
 
-  const other = await sql`SELECT id, username, display_name, role, points, verified, name_effect, avatar_style, avatar_seed,
+  const other = await sql`SELECT id, username, display_name, role, points, verified, avatar_style, avatar_seed,
+    (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = profiles.name_effect_id AND ne.active = true) as name_effect,
     (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id) as badges
     FROM profiles WHERE id = ${userId}`;
   if (other.length === 0) return err('User not found', 404);

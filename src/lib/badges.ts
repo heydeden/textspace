@@ -9,6 +9,12 @@ export const BADGE_THEMES = [
   { key: 'sky', label: 'Sky', cls: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
   { key: 'fuchsia', label: 'Fuchsia', cls: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30' },
   { key: 'teal', label: 'Teal', cls: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
+  { key: 'red', label: 'Red', cls: 'bg-red-500/20 text-red-300 border-red-500/30' },
+  { key: 'blue', label: 'Blue', cls: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+  { key: 'indigo', label: 'Indigo', cls: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
+  { key: 'amber', label: 'Amber', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+  { key: 'purple', label: 'Purple', cls: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+  { key: 'green', label: 'Green', cls: 'bg-green-500/20 text-green-300 border-green-500/30' },
   { key: 'gold', label: 'Gold', cls: 'bg-gradient-to-r from-yellow-500/25 to-amber-500/25 text-yellow-300 border-yellow-500/40' },
   { key: 'fire', label: 'Fire', cls: 'bg-gradient-to-r from-orange-500/25 to-red-500/25 text-orange-300 border-orange-500/40' },
   { key: 'ocean', label: 'Ocean', cls: 'bg-gradient-to-r from-cyan-500/25 to-blue-500/25 text-cyan-300 border-cyan-500/40' },
@@ -25,6 +31,10 @@ export const BADGE_EFFECTS = [
   { key: 'neon', label: 'Neon' },
   { key: 'rainbow', label: 'Rainbow' },
   { key: 'aurora', label: 'Aurora' },
+  { key: 'lightning', label: 'Lightning' },
+  { key: 'bounce', label: 'Bounce' },
+  { key: 'wiggle', label: 'Wiggle' },
+  { key: 'pop', label: 'Pop' },
 ] as const;
 
 export type BadgeTheme = (typeof BADGE_THEMES)[number]['key'];
@@ -35,6 +45,14 @@ export const MAX_BADGE_NAME_LENGTH = 24;
 
 const THEME_KEYS = new Set<string>(BADGE_THEMES.map(t => t.key));
 const EFFECT_KEYS = new Set<string>(BADGE_EFFECTS.map(e => e.key));
+
+export function isBadgeTheme(key: unknown): key is BadgeTheme {
+  return typeof key === 'string' && THEME_KEYS.has(key);
+}
+
+export function isBadgeEffect(key: unknown): key is BadgeEffect {
+  return typeof key === 'string' && EFFECT_KEYS.has(key);
+}
 
 export interface BadgeDef {
   id: string;

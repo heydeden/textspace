@@ -6,7 +6,8 @@ export const GET = withUser(async (req, user) => {
   // Get all conversations for this user (last message per other user)
   const rows = await query(`
     SELECT DISTINCT ON (other_id)
-      other_id as user_id, other.username, other.display_name, other.role, other.points, other.verified, other.name_effect, other.avatar_style, other.avatar_seed,
+      other_id as user_id, other.username, other.display_name, other.role, other.points, other.verified, other.avatar_style, other.avatar_seed,
+     (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = other.name_effect_id AND ne.active = true) as name_effect,
      (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = other.id) as badges,
       m.content as last_message, m.created_at as last_message_at
     FROM (
