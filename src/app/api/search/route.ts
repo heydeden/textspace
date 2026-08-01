@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   if (type === 'posts') {
     const posts = await query(
       `SELECT p.id, p.content, p.created_at,
-        u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.custom_roles, u.name_effect, u.avatar_style, u.avatar_seed,
+        u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.custom_roles, u.name_effect, u.theme, u.avatar_style, u.avatar_seed,
         (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
         (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count,
         ${me ? `EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $1) as liked_by_me` : 'false as liked_by_me'}

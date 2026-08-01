@@ -5,8 +5,9 @@ import VerifiedBadge from '@/components/VerifiedBadge';
 import CustomRoleBadge from '@/components/CustomRoleBadge';
 import { formatCount } from '@/lib/format';
 import { NAME_EFFECTS, nameEffectClass } from '@/lib/nameEffects';
+import { PROFILE_THEMES, themeClasses, themeClassNames } from '@/lib/profileThemes';
 
-type ActionType = 'points' | 'role' | 'effect' | 'ban' | 'unban' | 'delete';
+type ActionType = 'points' | 'role' | 'effect' | 'theme' | 'ban' | 'unban' | 'delete';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
@@ -21,6 +22,7 @@ export default function AdminUsers() {
   const [roleInput, setRoleInput] = useState('user');
   const [customRolesInput, setCustomRolesInput] = useState('');
   const [effectInput, setEffectInput] = useState('none');
+  const [themeInput, setThemeInput] = useState('default');
   const [currentUserId, setCurrentUserId] = useState('');
 
   useEffect(() => {
@@ -63,6 +65,20 @@ export default function AdminUsers() {
     });
     const d = await res.json();
     if (d.success) { setMessage('Name effect updated'); loadUsers(); }
+    else setMessage(d.error);
+    setAction(null);
+    setMenuFor(null);
+  }
+
+  async function saveProfileTheme(userId: string, theme: string) {
+    setMessage('');
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, theme }),
+    });
+    const d = await res.json();
+    if (d.success) { setMessage('Profile theme updated'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
     setMenuFor(null);
@@ -132,6 +148,7 @@ export default function AdminUsers() {
       setCustomRolesInput((u.custom_roles || []).join(', '));
     }
     if (type === 'effect') setEffectInput(u.name_effect || 'none');
+    if (type === 'theme') setThemeInput(u.theme || 'default');
     setAction({ type, userId: u.id, username: u.username });
     setMenuFor(null);
   };
@@ -212,6 +229,7 @@ export default function AdminUsers() {
                         <button onClick={() => openAction('points', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Points</button>
                         <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>
                         <button onClick={() => openAction('effect', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Name Effect</button>
+                        <button onClick={() => openAction('theme', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Profile Theme</button>
                         {!isSelf(u.id) && (
                           <button onClick={() => openAction(u.banned ? 'unban' : 'ban', u)}
                             className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.banned ? 'text-green-400' : 'text-red-400'}`}>
@@ -301,6 +319,33 @@ export default function AdminUsers() {
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
               <button onClick={() => saveNameEffect(action.userId, effectInput)}
+                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {action?.type === 'theme' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setAction(null)}>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-semibold text-lg mb-1">Profile Theme</h3>
+            <p className="text-zinc-500 text-xs mb-4">@{action.username} — tema halaman profil + post card</p>
+            <select value={themeInput} onChange={e => setThemeInput(e.target.value)} autoFocus
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500">
+              {PROFILE_THEMES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+            </select>
+            <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden">
+              <div className={`h-10 ${themeClasses(themeInput).banner}`} />
+              <div className="p-3 flex items-center gap-2">
+                <span className={`w-8 h-8 rounded-full bg-zinc-700 shrink-0 ring-2 ${themeClasses(themeInput).ring}`} />
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-white truncate block max-w-44">{action.username}</span>
+                  <span className="text-[10px] text-zinc-500">Preview profil + post</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
+              <button onClick={() => saveProfileTheme(action.userId, themeInput)}
                 className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
             </div>
           </div>

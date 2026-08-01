@@ -6,10 +6,11 @@ import Avatar from './Avatar';
 import UserIdentity from './UserIdentity';
 import ConfirmModal from './ConfirmModal';
 import { formatCount } from '@/lib/format';
+import { themeClasses } from '@/lib/profileThemes';
 
 interface Post {
   id: string; content: string; created_at: string;
-  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; custom_roles?: string[]; name_effect?: string; avatar_style?: string | null; avatar_seed?: string | null;
+  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; custom_roles?: string[]; name_effect?: string; theme?: string; avatar_style?: string | null; avatar_seed?: string | null;
   like_count: number; comment_count: number; liked_by_me: boolean;
 }
 
@@ -35,6 +36,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
   const [editContent, setEditContent] = useState(post.content);
   const [editSaving, setEditSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const theme = themeClasses(post.theme);
   const isOwn = currentUserId && post.user_id === currentUserId;
   const isEditable = isOwn && (Date.now() - new Date(post.created_at).getTime()) / 3600000 <= 24;
 
@@ -85,10 +87,10 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
   }
 
   return (
-    <div className="border border-zinc-800 rounded-xl p-4 mb-3 hover:border-zinc-700 transition">
+    <div className={`border ${theme.border} rounded-xl p-4 mb-3 ${theme.borderHover} transition`}>
       <div className="flex items-center justify-between mb-1">
         <Link href={`/profile/${post.username}`} className="flex items-center gap-2 min-w-0">
-          <Avatar style={post.avatar_style} seed={post.avatar_seed} username={post.username} displayName={post.display_name} size="sm" />
+          <span className={`rounded-full ${theme.ringSm} ${post.theme && post.theme !== 'default' ? 'ring-1' : ''}`}><Avatar style={post.avatar_style} seed={post.avatar_seed} username={post.username} displayName={post.display_name} size="sm" /></span>
           <UserIdentity displayName={post.display_name} verified={post.verified} role={post.role} customRoles={post.custom_roles} nameEffect={post.name_effect} pts={post.points} />
         </Link>
         {currentUserId && (

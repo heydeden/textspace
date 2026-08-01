@@ -9,6 +9,7 @@ import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 import { pointsLevel } from '@/lib/points';
 import { nameEffectClass } from '@/lib/nameEffects';
+import { themeClasses } from '@/lib/profileThemes';
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -96,14 +97,17 @@ export default function ProfilePage() {
   };
 
   const nameEffect = nameEffectClass(profile?.name_effect);
+  const theme = themeClasses(profile?.theme);
 
   if (loading) return <div className="text-center text-zinc-500 py-8">Loading...</div>;
 
   return (
     <div>
-      <div className="border border-zinc-800 rounded-xl p-6 mb-4 text-center">
+      <div className={`overflow-hidden border ${theme.border} rounded-xl mb-4 text-center`}>
+        <div className={`h-16 ${theme.banner}`} />
+        <div className="p-6">
         <div className="flex justify-center mb-3">
-          <Avatar style={profile?.avatar_style} seed={profile?.avatar_seed} username={profile?.username || username} displayName={profile?.display_name || username} size="lg" />
+          <span className={`rounded-full ${theme.ring} ring-2`}><Avatar style={profile?.avatar_style} seed={profile?.avatar_seed} username={profile?.username || username} displayName={profile?.display_name || username} size="lg" /></span>
         </div>
         <div className="flex flex-col items-center justify-center gap-1">
           <div className="flex items-center justify-center min-w-0">
@@ -152,11 +156,11 @@ export default function ProfilePage() {
           <div className="flex items-center justify-center gap-2 mt-4">
             <button onClick={toggleFollow}
               className={`px-6 py-2 rounded-full text-sm font-medium transition ${
-                following ? 'border border-zinc-700 text-white hover:border-red-500 hover:text-red-400' : 'bg-blue-600 text-white hover:bg-blue-700'
+                following ? 'border border-zinc-700 text-white hover:border-red-500 hover:text-red-400' : theme.accentButton
               }`}
             >{following ? 'Following' : 'Follow'}</button>
             <button onClick={() => profile?.id && router.push(`/messages/${profile.id}`)}
-              className="px-4 py-2 rounded-full text-sm font-medium border border-zinc-700 text-zinc-300 hover:border-zinc-500 transition">Message</button>
+              className={`px-4 py-2 rounded-full text-sm font-medium border ${theme.accentButtonOutline} transition`}>Message</button>
             {!profile?.blocked_by_me && (
               <button onClick={toggleBlock}
                 className="px-4 py-2 rounded-full text-sm font-medium border border-red-900 text-red-400 hover:bg-red-950/50 transition">Block</button>
@@ -167,6 +171,7 @@ export default function ProfilePage() {
             )}
           </div>
         )}
+        </div>
       </div>
 
       {posts.length === 0 ? (

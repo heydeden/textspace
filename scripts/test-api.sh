@@ -115,6 +115,24 @@ check "profile PATCH + name_effect (diabaikan)" 200 "$S"
 R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
 echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('name_effect') == 'none', d.get('name_effect'); print('  me.name_effect setelah injection: none OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
 
+echo "== 4c. Profile theme (admin-only) =="
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"theme\":\"crimson\"}")
+check "user set theme (admin-only)" 403 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"theme\":\"crimson\"}")
+check "admin set valid theme" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"theme\":\"hacker\"}")
+check "invalid theme" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"theme\":\"gold\",\"name_effect\":\"lightning\"}")
+check "gabungan theme + name_effect 1 PATCH" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"theme\":\"default\",\"name_effect\":\"none\"}")
+check "reset theme + effect" 200 "$S"
+R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('theme') == 'default', d.get('theme'); print('  me.theme: default OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/profile" -H 'Content-Type: application/json' -d "{\"display_name\":\"Tester X\",\"theme\":\"gold\"}")
+check "profile PATCH + theme (diabaikan)" 200 "$S"
+R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; assert d.get('theme') == 'default', d.get('theme'); print('  me.theme setelah injection: default OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+
 echo "== 5. Extra field / profile injection =="
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/profile" -H 'Content-Type: application/json' -d "{\"display_name\":\"Tester X\",\"custom_roles\":[\"Hacked\"]}")
 check "profile PATCH + custom_roles (diabaikan)" 200 "$S"

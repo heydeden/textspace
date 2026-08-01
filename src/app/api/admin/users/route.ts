@@ -3,6 +3,7 @@ import { ok, err, isUUID } from '@/lib/api';
 import { withAdmin } from '@/lib/api';
 import { validateCustomRoles } from '@/lib/customRoles';
 import { validateNameEffect } from '@/lib/nameEffects';
+import { validateProfileTheme } from '@/lib/profileThemes';
 
 export const GET = withAdmin(async (req) => {
   const url = new URL(req.url);
@@ -23,7 +24,7 @@ export const GET = withAdmin(async (req) => {
 
   params.push(limit, offset);
   const rows = await query(
-    `SELECT id, username, display_name, bio, role, points, banned, verified, custom_roles, name_effect, avatar_style, created_at::text,
+    `SELECT id, username, display_name, bio, role, points, banned, verified, custom_roles, name_effect, theme, avatar_style, created_at::text,
       (SELECT COUNT(*)::int FROM posts WHERE user_id = profiles.id) as post_count
      FROM profiles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
@@ -32,7 +33,7 @@ export const GET = withAdmin(async (req) => {
 });
 
 export const PATCH = withAdmin(async (req, user) => {
-  const { user_id, role, banned, points, verified, custom_roles, name_effect } = await req.json();
+  const { user_id, role, banned, points, verified, custom_roles, name_effect, theme } = await req.json();
   if (!user_id) return err('user_id required');
   if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
@@ -72,6 +73,12 @@ export const PATCH = withAdmin(async (req, user) => {
     if (effect === null) return err('Invalid name_effect');
     updates.push(`name_effect = $${idx++}`);
     params.push(effect);
+  }
+  if (theme !== undefined) {
+    const t = validateProfileTheme(theme);
+    if (t === null) return err('Invalid theme');
+    updates.push(`theme = $${idx++}`);
+    params.push(t);
   }
 
   if (updates.length === 0) return err('Nothing to update');
