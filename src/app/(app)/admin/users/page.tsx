@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
-import CustomRoleBadge from '@/components/CustomRoleBadge';
+import Badge from '@/components/Badge';
 import { formatCount } from '@/lib/format';
 import { NAME_EFFECTS, nameEffectClass } from '@/lib/nameEffects';
 import { PROFILE_THEMES, themeClasses, themeClassNames } from '@/lib/profileThemes';
@@ -20,7 +20,8 @@ export default function AdminUsers() {
   const [action, setAction] = useState<{ type: ActionType; userId: string; username: string } | null>(null);
   const [pointsInput, setPointsInput] = useState('');
   const [roleInput, setRoleInput] = useState('user');
-  const [customRolesInput, setCustomRolesInput] = useState('');
+  const [badgesInput, setBadgesInput] = useState<string[]>([]);
+  const [allBadges, setAllBadges] = useState<any[]>([]);
   const [effectInput, setEffectInput] = useState('none');
   const [themeInput, setThemeInput] = useState('default');
   const [currentUserId, setCurrentUserId] = useState('');
@@ -29,6 +30,9 @@ export default function AdminUsers() {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
       if (d.data?.id) setCurrentUserId(d.data.id);
     });
+    fetch('/api/badges').then(r => r.json()).then(d => {
+      if (d.data?.badges) setAllBadges(d.data.badges);
+    }).catch(() => {});
   }, []);
 
   async function loadUsers() {
@@ -43,17 +47,24 @@ export default function AdminUsers() {
   useEffect(() => { loadUsers(); }, [page]);
 
   async function saveRole(userId: string) {
-    const custom_roles = customRolesInput.split(',').map(s => s.trim()).filter(Boolean);
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, role: roleInput, custom_roles }),
+      body: JSON.stringify({ user_id: userId, role: roleInput, badges: badgesInput }),
     });
     const d = await res.json();
-    if (d.success) { setMessage('Role & custom roles updated'); loadUsers(); }
+    if (d.success) { setMessage('Role & badges updated'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
     setMenuFor(null);
+  }
+
+  function toggleBadge(id: string) {
+    setBadgesInput(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 5) { setMessage('Max 5 badges per user'); return prev; }
+      return [...prev, id];
+    });
   }
 
   async function saveNameEffect(userId: string, effect: string) {
@@ -145,7 +156,7 @@ export default function AdminUsers() {
     if (type === 'points') setPointsInput(String(u.points));
     if (type === 'role') {
       setRoleInput(u.role || 'user');
-      setCustomRolesInput((u.custom_roles || []).join(', '));
+      setBadgesInput((u.badges || []).map((b: any) => b.id));
     }
     if (type === 'effect') setEffectInput(u.name_effect || 'none');
     if (type === 'theme') setThemeInput(u.theme || 'default');
@@ -211,7 +222,7 @@ export default function AdminUsers() {
                         </span>
                       )}
                       {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
-                      {(u.custom_roles || []).map((r: string) => <CustomRoleBadge key={r} name={r} />)}
+                      {(u.badges || []).map((b: any) => <Badge key={b.id} badge={b} />)}
                     </div>
                     <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts · {u.points} pts</p>
                   </div>
@@ -285,13 +296,28 @@ export default function AdminUsers() {
               <option value="admin">Admin</option>
             </select>
             {isSelf(action.userId) && <p className="text-zinc-600 text-xs mt-1">Role kamu terkunci (admin).</p>}
-            <p className="text-white font-semibold text-sm mt-4 mb-1">Custom Roles</p>
-            <p className="text-zinc-500 text-xs mb-2">Max 5, 1-24 chars each, pisah pakai koma. Kosongkan = hapus semua.</p>
-            <input value={customRolesInput} onChange={e => setCustomRolesInput(e.target.value)}
-              placeholder="Veteran, Artist, OG"
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+            <p className="text-white font-semibold text-sm mt-4 mb-1">Badges</p>
+            <p className="text-zinc-500 text-xs mb-2">Max 5 badge per user. Kosongkan = hapus semua.</p>
+            {allBadges.length === 0 ? (
+              <p className="text-zinc-600 text-xs">Belum ada badge — buat di tab Badges.</p>
+            ) : (
+              <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
+                {allBadges.map((b: any) => {
+                  const checked = badgesInput.includes(b.id);
+                  return (
+                    <label key={b.id} className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 cursor-pointer transition ${checked ? 'border-blue-600 bg-blue-600/10' : 'border-zinc-800 hover:border-zinc-700'}`}>
+                      <input type="checkbox" checked={checked} onChange={() => toggleBadge(b.id)} className="accent-blue-600" />
+                      <Badge badge={b} />
+                    </label>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex items-center gap-1 mt-2 flex-wrap min-h-6">
-              {customRolesInput.split(',').map(s => s.trim()).filter(Boolean).map((r: string) => <CustomRoleBadge key={r} name={r} />)}
+              {badgesInput.map(id => {
+                const b = allBadges.find((x: any) => x.id === id);
+                return b ? <Badge key={id} badge={b} /> : null;
+              })}
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>

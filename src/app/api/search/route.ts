@@ -15,7 +15,8 @@ export async function GET(req: Request) {
   if (type === 'posts') {
     const posts = await query(
       `SELECT p.id, p.content, p.created_at,
-        u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.custom_roles, u.name_effect, u.theme, u.avatar_style, u.avatar_seed,
+        u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.name_effect, u.theme, u.avatar_style, u.avatar_seed,
+       (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = u.id) as badges,
         (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
         (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count,
         ${me ? `EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $1) as liked_by_me` : 'false as liked_by_me'}
@@ -30,7 +31,8 @@ export async function GET(req: Request) {
   }
 
   const users = await query(
-    `SELECT id, username, display_name, role, points, verified, custom_roles, name_effect, avatar_style, avatar_seed, banned
+    `SELECT id, username, display_name, role, points, verified, name_effect, avatar_style, avatar_seed, banned,
+     (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id) as badges
      FROM profiles WHERE (username ILIKE $1 OR display_name ILIKE $1) AND banned = false
      ${me ? `AND NOT EXISTS (SELECT 1 FROM blocks WHERE (blocker_id = $2 AND blocked_id = profiles.id) OR (blocker_id = profiles.id AND blocked_id = $2))` : ''}
      ORDER BY points DESC LIMIT 20`,

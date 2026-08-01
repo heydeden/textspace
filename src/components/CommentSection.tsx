@@ -6,7 +6,7 @@ import ConfirmModal from './ConfirmModal';
 interface Comment {
   id: string; content: string; created_at: string;
   parent_id: string | null;
-  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; custom_roles?: string[]; name_effect?: string;
+  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; badges?: { id: string; name: string; theme?: string; effect?: string }[]; name_effect?: string;
 }
 
 function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent }: {
@@ -27,7 +27,7 @@ function CommentItem({ comment, currentUserId, onReply, onEdit, onDelete, indent
   return (
     <div className={`border-b border-zinc-800 py-2 last:border-0 ${indent ? 'ml-6 border-l border-zinc-800 pl-3' : ''}`}>
       <div className="flex items-center justify-between">
-          <UserIdentity displayName={comment.display_name} verified={comment.verified} role={comment.role} customRoles={comment.custom_roles} nameEffect={comment.name_effect} pts={comment.points} />
+          <UserIdentity displayName={comment.display_name} verified={comment.verified} role={comment.role} badges={comment.badges} nameEffect={comment.name_effect} pts={comment.points} />
         <div className="flex items-center gap-2">
           {currentUserId && !isOwn && !indent && (
             <button onClick={() => { setReplying(!replying); setReplyContent(''); }} className="text-zinc-600 hover:text-blue-400 text-xs">Reply</button>

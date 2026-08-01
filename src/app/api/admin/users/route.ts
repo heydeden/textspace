@@ -1,9 +1,9 @@
 import { query } from '@/lib/db';
 import { ok, err, isUUID } from '@/lib/api';
 import { withAdmin } from '@/lib/api';
-import { validateCustomRoles } from '@/lib/customRoles';
 import { validateNameEffect } from '@/lib/nameEffects';
 import { validateProfileTheme } from '@/lib/profileThemes';
+import { validateBadgeAssignments } from '@/lib/badges';
 
 export const GET = withAdmin(async (req) => {
   const url = new URL(req.url);
@@ -24,7 +24,8 @@ export const GET = withAdmin(async (req) => {
 
   params.push(limit, offset);
   const rows = await query(
-    `SELECT id, username, display_name, bio, role, points, banned, verified, custom_roles, name_effect, theme, avatar_style, created_at::text,
+    `SELECT id, username, display_name, bio, role, points, banned, verified, name_effect, theme, avatar_style, created_at::text,
+      (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id) as badges,
       (SELECT COUNT(*)::int FROM posts WHERE user_id = profiles.id) as post_count
      FROM profiles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
@@ -33,7 +34,7 @@ export const GET = withAdmin(async (req) => {
 });
 
 export const PATCH = withAdmin(async (req, user) => {
-  const { user_id, role, banned, points, verified, custom_roles, name_effect, theme } = await req.json();
+  const { user_id, role, banned, points, verified, name_effect, theme, badges } = await req.json();
   if (!user_id) return err('user_id required');
   if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
@@ -62,12 +63,6 @@ export const PATCH = withAdmin(async (req, user) => {
     updates.push(`verified = $${idx++}`);
     params.push(verified);
   }
-  if (custom_roles !== undefined) {
-    const roles = validateCustomRoles(custom_roles);
-    if (roles === null) return err('Invalid custom_roles: max 5 roles, 1-24 chars each');
-    updates.push(`custom_roles = $${idx++}`);
-    params.push(roles);
-  }
   if (name_effect !== undefined) {
     const effect = validateNameEffect(name_effect);
     if (effect === null) return err('Invalid name_effect');
@@ -80,10 +75,26 @@ export const PATCH = withAdmin(async (req, user) => {
     updates.push(`theme = $${idx++}`);
     params.push(t);
   }
+  if (badges !== undefined) {
+    const badgeIds = validateBadgeAssignments(badges);
+    if (badgeIds === null) return err(`Invalid badges: max 5 badge ids`);
+    const valid = await query(
+      `SELECT id FROM badges WHERE id = ANY($1::uuid[]) AND active = true`,
+      [badgeIds]
+    );
+    if (valid.length !== badgeIds.length) return err('One or more badges not found');
+    await query('DELETE FROM user_badges WHERE user_id = $1', [user_id]);
+    if (badgeIds.length > 0) {
+      for (const bid of badgeIds) {
+        await query('INSERT INTO user_badges (user_id, badge_id) VALUES ($1, $2)', [user_id, bid]);
+      }
+    }
+  }
 
-  if (updates.length === 0) return err('Nothing to update');
-  params.push(user_id);
-  await query(`UPDATE profiles SET ${updates.join(', ')} WHERE id = $${idx}`, params);
+  if (updates.length > 0) {
+    params.push(user_id);
+    await query(`UPDATE profiles SET ${updates.join(', ')} WHERE id = $${idx}`, params);
+  }
   return ok({ updated: true });
 });
 

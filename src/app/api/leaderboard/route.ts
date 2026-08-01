@@ -4,7 +4,8 @@ import { withUser } from '@/lib/api';
 
 export const GET = withUser(async (req, user) => {
   const rows = await query(`
-    SELECT u.id, u.username, u.display_name, u.role, u.points, u.verified, u.custom_roles, u.name_effect, u.avatar_style,
+    SELECT u.id, u.username, u.display_name, u.role, u.points, u.verified, u.name_effect, u.avatar_style,
+     (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = u.id) as badges,
       (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as post_count
     FROM profiles u
     WHERE u.banned = false

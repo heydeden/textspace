@@ -10,7 +10,9 @@ export const GET = async (req: Request) => {
   if (!username) return err('username required');
 
   const rows = await query(
-    `SELECT id, username, display_name, bio, role, points, banned, verified, custom_roles, name_effect, theme, avatar_style, avatar_seed, created_at FROM profiles WHERE username = $1`,
+    `SELECT id, username, display_name, bio, role, points, banned, verified, name_effect, theme, avatar_style, avatar_seed, created_at,
+      (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id) as badges
+      FROM profiles WHERE username = $1`,
     [username]
   );
   if (rows.length === 0) return err('User not found', 404);
@@ -79,7 +81,7 @@ export const PATCH = withUser(async (req, user) => {
 
   params.push(user.id);
   const rows = await query(
-    `UPDATE profiles SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, username, display_name, bio, role, points, verified, custom_roles, name_effect, theme, avatar_style, avatar_seed`,
+    `UPDATE profiles SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, username, display_name, bio, role, points, verified, name_effect, theme, avatar_style, avatar_seed`,
     params
   );
   return ok(rows[0]);

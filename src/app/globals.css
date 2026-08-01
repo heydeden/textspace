@@ -120,3 +120,92 @@ body { background: #000; color: #e5e7eb; }
   .name-effect-neon { text-shadow: 0 0 12px #c026d3, 0 0 24px #a21caf; }
   .name-effect-glow { text-shadow: 0 0 12px rgba(147,197,253,0.6); }
 }
+
+/* Badge effects (admin-defined badges — profiles via user_badges/badges) */
+.badge-effect-glow { animation: badge-glow 2.2s ease-in-out infinite; }
+@keyframes badge-glow {
+  0%, 100% { box-shadow: 0 0 3px 0 rgba(255,255,255,0.35); }
+  50% { box-shadow: 0 0 8px 2px rgba(255,255,255,0.5); }
+}
+
+.badge-effect-pulse { animation: badge-pulse 1.8s ease-in-out infinite; }
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.badge-effect-shimmer { position: relative; overflow: hidden; }
+.badge-effect-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: badge-shimmer 2.4s linear infinite;
+}
+@keyframes badge-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -50% 0; }
+}
+
+.badge-effect-sparkle { position: relative; }
+.badge-effect-sparkle::before,
+.badge-effect-sparkle::after {
+  content: '✦';
+  position: absolute;
+  top: -6px;
+  font-size: 9px;
+  opacity: 0;
+  animation: badge-sparkle 2s ease-in-out infinite;
+}
+.badge-effect-sparkle::before { left: -8px; }
+.badge-effect-sparkle::after { right: -8px; animation-delay: 1s; }
+@keyframes badge-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(90deg); }
+}
+
+.badge-effect-fire { animation: badge-fire 1.2s ease-in-out infinite; }
+@keyframes badge-fire {
+  0%, 100% { box-shadow: 0 0 4px 0 rgba(249,115,22,0.6); }
+  50% { box-shadow: 0 0 10px 2px rgba(239,68,68,0.8); }
+}
+
+.badge-effect-neon { animation: badge-neon 2s ease-in-out infinite; }
+@keyframes badge-neon {
+  0%, 100% { box-shadow: 0 0 5px 0 currentColor; }
+  45% { box-shadow: 0 0 1px 0 currentColor; opacity: 0.85; }
+  50% { box-shadow: 0 0 5px 0 currentColor; }
+  55% { box-shadow: 0 0 1px 0 currentColor; opacity: 0.85; }
+  60% { box-shadow: 0 0 5px 0 currentColor; }
+}
+
+.badge-effect-rainbow { animation: badge-rainbow 3s linear infinite; }
+@keyframes badge-rainbow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.badge-effect-aurora { animation: badge-aurora 4s ease-in-out infinite; }
+@keyframes badge-aurora {
+  0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+  50% { filter: hue-rotate(40deg) brightness(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-effect-glow,
+  .badge-effect-pulse,
+  .badge-effect-shimmer,
+  .badge-effect-sparkle,
+  .badge-effect-fire,
+  .badge-effect-neon,
+  .badge-effect-rainbow,
+  .badge-effect-aurora {
+    animation: none;
+  }
+  .badge-effect-shimmer::after,
+  .badge-effect-sparkle::before,
+  .badge-effect-sparkle::after {
+    display: none;
+  }
+}

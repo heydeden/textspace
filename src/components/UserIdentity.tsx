@@ -1,14 +1,14 @@
 import PtsBadge from './PtsBadge';
 import VerifiedBadge from './VerifiedBadge';
-import CustomRoleBadge from './CustomRoleBadge';
+import Badge, { type BadgeData } from './Badge';
 import { nameEffectClass } from '@/lib/nameEffects';
 
-export default function UserIdentity({ displayName, verified, role, pts, customRoles, nameEffect, size = 'sm' }: {
+export default function UserIdentity({ displayName, verified, role, pts, badges, nameEffect, size = 'sm' }: {
   displayName: string;
   verified?: boolean;
   role?: string;
   pts?: number;
-  customRoles?: string[];
+  badges?: BadgeData[];
   nameEffect?: string;
   size?: 'sm' | 'md';
 }) {
@@ -25,7 +25,7 @@ export default function UserIdentity({ displayName, verified, role, pts, customR
       <div className="flex items-center gap-1 mt-0.5 flex-wrap">
         {role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
         {role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
-        {(customRoles || []).map(r => <CustomRoleBadge key={r} name={r} />)}
+        {(badges || []).map(b => <Badge key={b.id} badge={b} />)}
         <PtsBadge pts={pts} />
       </div>
     </div>

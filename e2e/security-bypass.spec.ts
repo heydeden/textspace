@@ -42,7 +42,7 @@ test('non-admin cannot access admin panel or admin API', async ({ page }) => {
     const r = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: uid, custom_roles: ['Hacker'] }),
+      body: JSON.stringify({ user_id: uid, badges: [] }),
     });
     return { status: r.status, body: await r.json() };
   }, userId);

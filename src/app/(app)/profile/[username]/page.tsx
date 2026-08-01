@@ -4,8 +4,8 @@ import { useParams, useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
 import PtsBadge from '@/components/PtsBadge';
 import VerifiedBadge from '@/components/VerifiedBadge';
-import CustomRoleBadge from '@/components/CustomRoleBadge';
 import Avatar from '@/components/Avatar';
+import Badge from '@/components/Badge';
 import { formatCount } from '@/lib/format';
 import { pointsLevel } from '@/lib/points';
 import { nameEffectClass } from '@/lib/nameEffects';
@@ -116,7 +116,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center justify-center gap-1 flex-wrap">
             {roleBadge(profile?.role)}
-            {(profile?.custom_roles || []).map((r: string) => <CustomRoleBadge key={r} name={r} />)}
+            {(profile?.badges || []).map((b: { id: string; name: string; theme?: string; effect?: string }) => <Badge key={b.id} badge={b} />)}
             <PtsBadge pts={profile?.points} />
           </div>
         </div>

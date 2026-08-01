@@ -8,7 +8,7 @@ import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 
 interface Entry {
-  id: string; username: string; display_name: string; role?: string; verified?: boolean; custom_roles?: string[]; name_effect?: string; avatar_style?: string | null; avatar_seed?: string | null;
+  id: string; username: string; display_name: string; role?: string; verified?: boolean; badges?: { id: string; name: string; theme?: string; effect?: string }[]; name_effect?: string; avatar_style?: string | null; avatar_seed?: string | null;
   points: number; post_count: number;
 }
 
@@ -42,7 +42,7 @@ export default function LeaderboardPage() {
               <span className="w-8 text-center text-sm font-bold text-zinc-400">{medal(i)}</span>
               <Avatar style={u.avatar_style} seed={u.avatar_seed} username={u.username} displayName={u.display_name} size="md" />
               <div className="min-w-0 flex-1">
-                <UserIdentity displayName={u.display_name} verified={u.verified} role={u.role} customRoles={u.custom_roles} nameEffect={u.name_effect} pts={u.points} size="md" />
+                <UserIdentity displayName={u.display_name} verified={u.verified} role={u.role} badges={u.badges} nameEffect={u.name_effect} pts={u.points} size="md" />
                 <p className="text-zinc-500 text-xs">{formatCount(u.post_count)} posts</p>
               </div>
               <div className="text-right">

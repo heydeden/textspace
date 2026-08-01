@@ -23,6 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/admin" className="text-zinc-500 hover:text-white shrink-0">Dashboard</Link>
         <Link href="/admin/users" className="text-zinc-500 hover:text-white shrink-0">Users</Link>
         <Link href="/admin/posts" className="text-zinc-500 hover:text-white shrink-0">Posts</Link>
+        <Link href="/admin/badges" className="text-zinc-500 hover:text-white shrink-0">Badges</Link>
         <Link href="/admin/reports" className="text-zinc-500 hover:text-white shrink-0">Reports</Link>
       </div>
       {children}
