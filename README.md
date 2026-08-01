@@ -23,6 +23,9 @@ Next.js 16 + TypeScript + Tailwind CSS + Neon (Postgres) + JWT Auth
 - Trending feed (post populer 24 jam)
 - Search users by username/display name + post content
 - Role system: User / Mod / Admin + badge di profile, feed, comments
+- Badge registry (admin-defined): buat badge dengan tema (20) + efek (13) → assign ke user (max 5)
+- Name effect registry (admin-defined): efek nama custom (tema + animasi) → assign ke user
+- Profile theme (admin-granted): banner/border/ring profil + post card author
 - Reputation points & level (Newcomer → Bronze → Silver → Gold → Platinum)
 - Leaderboard (top 50 by points)
 - Profile stats (posts/followers/following/likes)
@@ -39,13 +42,12 @@ npm run dev
 
 Buka http://localhost:3000
 
-## 3 Development Environments
+## 2 Development Environments
 
 | Folder | Port | Function |
 |--------|------|----------|
 | `textspace/` | :3000 | Production (Vercel) |
-| `textspace-dev/` | :3001 | Development |
-| `textspace-test/` | :3002 | Testing |
+| `textspace-dev/` | :3001 | Development (clone utk fitur baru) |
 
 ## Project Structure
 
@@ -62,8 +64,8 @@ src/
 │   │   ├── messages/         + chat [userId]
 │   │   ├── leaderboard/
 │   │   ├── settings/
-│   │   └── admin/            Dashboard, Users, Posts, Reports
-│   └── api/                  23 API routes
+│   │   └── admin/            Dashboard, Users, Posts, Badges, Name Effects, Reports
+│   └── api/                  28 API routes
 ├── components/               Navbar, PostCard, PostForm, CommentSection
 └── lib/                      db, auth, api helpers
 ```
