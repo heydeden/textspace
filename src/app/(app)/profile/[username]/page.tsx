@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
 import PtsBadge from '@/components/PtsBadge';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import CustomRoleBadge from '@/components/CustomRoleBadge';
 import Avatar from '@/components/Avatar';
 import { formatCount } from '@/lib/format';
 import { pointsLevel } from '@/lib/points';
@@ -106,8 +107,9 @@ export default function ProfilePage() {
             <h1 title={profile?.display_name || username} className="text-xl font-bold text-white truncate max-w-64">{profile?.display_name || username}</h1>
             {(profile?.verified || profile?.role === 'admin') ? <VerifiedBadge /> : null}
           </div>
-          <div className="flex items-center justify-center gap-1">
+          <div className="flex items-center justify-center gap-1 flex-wrap">
             {roleBadge(profile?.role)}
+            {(profile?.custom_roles || []).map((r: string) => <CustomRoleBadge key={r} name={r} />)}
             <PtsBadge pts={profile?.points} />
           </div>
         </div>

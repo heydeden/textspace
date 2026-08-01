@@ -1,6 +1,7 @@
 import { query } from '@/lib/db';
 import { ok, err, isUUID } from '@/lib/api';
 import { withAdmin } from '@/lib/api';
+import { validateCustomRoles } from '@/lib/customRoles';
 
 export const GET = withAdmin(async (req) => {
   const url = new URL(req.url);
@@ -21,7 +22,7 @@ export const GET = withAdmin(async (req) => {
 
   params.push(limit, offset);
   const rows = await query(
-    `SELECT id, username, display_name, bio, role, points, banned, verified, avatar_style, created_at::text,
+    `SELECT id, username, display_name, bio, role, points, banned, verified, custom_roles, avatar_style, created_at::text,
       (SELECT COUNT(*)::int FROM posts WHERE user_id = profiles.id) as post_count
      FROM profiles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
@@ -30,7 +31,7 @@ export const GET = withAdmin(async (req) => {
 });
 
 export const PATCH = withAdmin(async (req, user) => {
-  const { user_id, role, banned, points, verified } = await req.json();
+  const { user_id, role, banned, points, verified, custom_roles } = await req.json();
   if (!user_id) return err('user_id required');
   if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
@@ -59,6 +60,12 @@ export const PATCH = withAdmin(async (req, user) => {
     if (typeof verified !== 'boolean') return err('verified must be boolean');
     updates.push(`verified = $${idx++}`);
     params.push(verified);
+  }
+  if (custom_roles !== undefined) {
+    const roles = validateCustomRoles(custom_roles);
+    if (roles === null) return err('Invalid custom_roles: max 5 roles, 1-24 chars each');
+    updates.push(`custom_roles = $${idx++}`);
+    params.push(roles);
   }
 
   if (updates.length === 0) return err('Nothing to update');

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import CustomRoleBadge from '@/components/CustomRoleBadge';
 import { formatCount } from '@/lib/format';
 
 type ActionType = 'points' | 'role' | 'ban' | 'unban' | 'delete';
@@ -17,6 +18,7 @@ export default function AdminUsers() {
   const [action, setAction] = useState<{ type: ActionType; userId: string; username: string } | null>(null);
   const [pointsInput, setPointsInput] = useState('');
   const [roleInput, setRoleInput] = useState('user');
+  const [customRolesInput, setCustomRolesInput] = useState('');
   const [currentUserId, setCurrentUserId] = useState('');
 
   useEffect(() => {
@@ -108,10 +110,25 @@ export default function AdminUsers() {
 
   const openAction = (type: ActionType, u: any) => {
     if (type === 'points') setPointsInput(String(u.points));
-    if (type === 'role') setRoleInput(u.role || 'user');
+    if (type === 'role') {
+      setRoleInput(u.role || 'user');
+      setCustomRolesInput((u.custom_roles || []).join(', '));
+    }
     setAction({ type, userId: u.id, username: u.username });
     setMenuFor(null);
   };
+
+  async function changeCustomRoles(userId: string, raw: string) {
+    const custom_roles = raw.split(',').map(s => s.trim()).filter(Boolean);
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, custom_roles }),
+    });
+    const d = await res.json();
+    if (d.success) { setMessage('Custom roles updated'); loadUsers(); }
+    else setMessage(d.error);
+  }
 
   const isSelf = (id: string) => id === currentUserId;
   const target = action ? users.find(u => u.id === action.userId) : null;
@@ -171,6 +188,7 @@ export default function AdminUsers() {
                         </span>
                       )}
                       {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
+                      {(u.custom_roles || []).map((r: string) => <CustomRoleBadge key={r} name={r} />)}
                     </div>
                     <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts · {u.points} pts</p>
                   </div>
@@ -244,10 +262,22 @@ export default function AdminUsers() {
               <option value="mod">Mod</option>
               <option value="admin">Admin</option>
             </select>
+            <div className="flex justify-end gap-2 mt-3">
+              <button onClick={() => changeRole(action.userId, roleInput)}
+                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save Role</button>
+            </div>
+            <p className="text-white font-semibold text-sm mt-5 mb-1">Custom Roles</p>
+            <p className="text-zinc-500 text-xs mb-2">Max 5, 1-24 chars each, pisah pakai koma. Kosongkan = hapus semua.</p>
+            <input value={customRolesInput} onChange={e => setCustomRolesInput(e.target.value)}
+              placeholder="Veteran, Artist, OG"
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
+            <div className="flex items-center gap-1 mt-2 flex-wrap min-h-6">
+              {customRolesInput.split(',').map(s => s.trim()).filter(Boolean).map((r: string) => <CustomRoleBadge key={r} name={r} />)}
+            </div>
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
-              <button onClick={() => changeRole(action.userId, roleInput)}
-                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
+              <button onClick={() => changeCustomRoles(action.userId, customRolesInput)}
+                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save Custom Roles</button>
             </div>
           </div>
         </div>

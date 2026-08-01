@@ -6,7 +6,7 @@ export const GET = withUser(async (req, user) => {
   // Get all conversations for this user (last message per other user)
   const rows = await query(`
     SELECT DISTINCT ON (other_id)
-      other_id as user_id, other.username, other.display_name, other.role, other.points, other.verified, other.avatar_style, other.avatar_seed,
+      other_id as user_id, other.username, other.display_name, other.role, other.points, other.verified, other.custom_roles, other.avatar_style, other.avatar_seed,
       m.content as last_message, m.created_at as last_message_at
     FROM (
       SELECT CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END as other_id,

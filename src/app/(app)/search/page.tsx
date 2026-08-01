@@ -88,7 +88,7 @@ export default function SearchPage() {
                 className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
                 <Avatar style={u.avatar_style} seed={u.avatar_seed} username={u.username} displayName={u.display_name} size="md" />
                 <div className="min-w-0">
-                  <UserIdentity displayName={u.display_name} verified={u.verified} role={u.role} pts={u.points} size="md" />
+                  <UserIdentity displayName={u.display_name} verified={u.verified} role={u.role} customRoles={u.custom_roles} pts={u.points} size="md" />
                   <p className="text-zinc-500 text-xs">{formatCount(u.points)} pts</p>
                 </div>
               </Link>

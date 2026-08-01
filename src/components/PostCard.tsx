@@ -9,7 +9,7 @@ import { formatCount } from '@/lib/format';
 
 interface Post {
   id: string; content: string; created_at: string;
-  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; avatar_style?: string | null; avatar_seed?: string | null;
+  user_id: string; username: string; display_name: string; role?: string; points?: number; verified?: boolean; custom_roles?: string[]; avatar_style?: string | null; avatar_seed?: string | null;
   like_count: number; comment_count: number; liked_by_me: boolean;
 }
 
@@ -89,7 +89,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
       <div className="flex items-center justify-between mb-1">
         <Link href={`/profile/${post.username}`} className="flex items-center gap-2 min-w-0">
           <Avatar style={post.avatar_style} seed={post.avatar_seed} username={post.username} displayName={post.display_name} size="sm" />
-          <UserIdentity displayName={post.display_name} verified={post.verified} role={post.role} pts={post.points} />
+          <UserIdentity displayName={post.display_name} verified={post.verified} role={post.role} customRoles={post.custom_roles} pts={post.points} />
         </Link>
         {currentUserId && (
           <div className="relative">

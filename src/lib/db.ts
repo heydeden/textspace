@@ -25,6 +25,8 @@ export async function initDB() {
     role VARCHAR(20) DEFAULT 'user',
     points INT DEFAULT 0,
     banned BOOLEAN DEFAULT false,
+    verified BOOLEAN DEFAULT false,
+    custom_roles TEXT[] DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
   await db`CREATE TABLE IF NOT EXISTS posts (
@@ -89,6 +91,7 @@ export async function initDB() {
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS points INT DEFAULT 0`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS banned BOOLEAN DEFAULT false`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT false`;
+  await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS custom_roles TEXT[] DEFAULT '{}'`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_style VARCHAR(30) DEFAULT NULL`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_seed VARCHAR(50) DEFAULT NULL`;
   await db`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS reference_id UUID DEFAULT NULL`;
