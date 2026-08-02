@@ -1,6 +1,6 @@
 'use client';
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { shouldFlipUp } from '@/lib/dropdown';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { centerMenuBox, type CenterBox } from '@/lib/dropdown';
 
 interface SmartDropdownProps {
   trigger: ReactNode;
@@ -11,22 +11,29 @@ interface SmartDropdownProps {
 
 export default function SmartDropdown({ trigger, triggerClass, children, menuClass = '' }: SmartDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [up, setUp] = useState(false);
-  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
+  const [box, setBox] = useState<CenterBox | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (!open) return;
-    const wrap = wrapRef.current;
-    const menu = menuRef.current;
-    if (!wrap || !menu) return;
-    const rect = wrap.getBoundingClientRect();
-    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-    const flip = shouldFlipUp(rect.bottom, menu.offsetHeight, viewportHeight);
-    setUp(flip);
-    setMaxHeight(flip ? Math.max(120, rect.top - 8) : undefined);
+    const measure = () => {
+      const wrap = wrapRef.current;
+      const menu = menuRef.current;
+      if (!wrap || !menu) return;
+      const viewport = window.visualViewport;
+      const viewportWidth = viewport?.width ?? window.innerWidth;
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      setBox(centerMenuBox(viewportWidth, viewportHeight, menu.offsetWidth, menu.offsetHeight));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, [open]);
+
+  const menuStyle: CSSProperties | undefined = box
+    ? { left: box.left, top: box.top, maxHeight: box.maxHeight, maxWidth: box.maxWidth }
+    : undefined;
 
   return (
     <div className="relative" ref={wrapRef}>
@@ -38,9 +45,11 @@ export default function SmartDropdown({ trigger, triggerClass, children, menuCla
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div
             ref={menuRef}
-            onClickCapture={() => setOpen(false)}
-            style={maxHeight ? { maxHeight } : undefined}
-            className={`absolute right-0 z-40 max-h-[calc(100vh-4rem)] overflow-y-auto ${up ? 'bottom-full mb-1' : 'top-full mt-1'} ${menuClass}`}
+            onClickCapture={e => {
+              if (e.target !== menuRef.current) setOpen(false);
+            }}
+            style={menuStyle}
+            className={`fixed z-40 overflow-y-auto dropdown-scroll ${menuClass}`}
           >
             {children}
           </div>

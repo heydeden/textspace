@@ -98,7 +98,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
           <SmartDropdown
             trigger="⋯"
             triggerClass="text-zinc-600 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition"
-            menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+            menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl"
           >
             {isOwn ? (
               <>

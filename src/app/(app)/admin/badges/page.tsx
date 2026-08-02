@@ -127,7 +127,7 @@ export default function AdminBadges() {
               <SmartDropdown
                 trigger="⋯"
                 triggerClass="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition shrink-0"
-                menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+                menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl"
               >
                 <button onClick={() => updateBadge(b.id, { active: !b.active })}
                   className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">

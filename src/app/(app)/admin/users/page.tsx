@@ -209,7 +209,7 @@ export default function AdminUsers() {
                 <SmartDropdown
                   trigger="⋯"
                   triggerClass="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition"
-                  menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+                  menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl"
                 >
                   <button onClick={() => toggleVerify(u.id, !!u.verified)} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.verified ? 'text-zinc-400' : 'text-sky-400'}`}>
                     {u.verified ? 'Unverify' : 'Verify'}
