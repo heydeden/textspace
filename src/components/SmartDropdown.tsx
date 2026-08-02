@@ -45,7 +45,10 @@ export default function SmartDropdown({ trigger, triggerClass, children, menuCla
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div
             ref={menuRef}
-            onClickCapture={e => {
+            onClick={e => {
+              // Bubble phase: item onClick (modal/action) runs first, then the
+              // menu closes synchronously — no capture/timer race that could
+              // swallow the item click.
               if (e.target !== menuRef.current) setOpen(false);
             }}
             style={menuStyle}
