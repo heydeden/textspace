@@ -40,6 +40,7 @@ check "test:api [0-9]+/[0-9]+"    "test:api X/X (angka)"
 check "e2e [0-9]+/[0-9]+"         "e2e X/X (angka)"
 check "code-reviewer (PASS|FAIL|OK)"   "hasil code-reviewer"
 check "security-reviewer (PASS|FAIL|OK)" "hasil security-reviewer"
+check "skills: .+"                "skills: <skill yang dipakai>"
 
 echo "[commit-msg] Gate OK"
 exit 0
