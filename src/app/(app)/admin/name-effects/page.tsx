@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
+import SmartDropdown from '@/components/SmartDropdown';
 import { NAME_EFFECT_THEMES, NAME_EFFECT_FX, nameEffectClass } from '@/lib/nameEffects';
 
 export default function AdminNameEffects() {
@@ -13,7 +14,6 @@ export default function AdminNameEffects() {
   const [nameInput, setNameInput] = useState('');
   const [themeInput, setThemeInput] = useState('violet');
   const [fxInput, setFxInput] = useState('none');
-  const [menuFor, setMenuFor] = useState<string | null>(null);
 
   async function loadEffects() {
     const res = await fetch('/api/admin/name-effects');
@@ -123,25 +123,20 @@ export default function AdminNameEffects() {
                 <span className="text-zinc-500 text-xs shrink-0">{e.grant_count} user</span>
                 {!e.active && <span className="text-[10px] bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">nonaktif</span>}
               </div>
-              <div className="relative shrink-0">
-                <button onClick={() => setMenuFor(menuFor === e.id ? null : e.id)}
-                  className="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition">⋯</button>
-                {menuFor === e.id && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setMenuFor(null)} />
-                    <div className="absolute right-0 top-full z-40 mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
-                      <button onClick={() => { updateEffect(e.id, { active: !e.active }); setMenuFor(null); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">
-                        {e.active ? 'Nonaktifkan' : 'Aktifkan'}
-                      </button>
-                      <button onClick={() => { setEditing(e); setMenuFor(null); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit</button>
-                      <button onClick={() => { setShowDelete(e); setMenuFor(null); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Hapus</button>
-                    </div>
-                  </>
-                )}
-              </div>
+              <SmartDropdown
+                trigger="⋯"
+                triggerClass="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition shrink-0"
+                menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+              >
+                <button onClick={() => updateEffect(e.id, { active: !e.active })}
+                  className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">
+                  {e.active ? 'Nonaktifkan' : 'Aktifkan'}
+                </button>
+                <button onClick={() => setEditing(e)}
+                  className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit</button>
+                <button onClick={() => setShowDelete(e)}
+                  className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Hapus</button>
+              </SmartDropdown>
             </div>
           ))}
         </div>

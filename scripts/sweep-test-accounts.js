@@ -28,8 +28,8 @@ if (!url) {
 const { neon } = require('@neondatabase/serverless');
 const sql = neon(url);
 
-// Pola akun test aktual (dari test-api.sh: byptest*, e2e specs: bdg_/thx/e2ebyp, historis: cr_/xy_/nefx/uivtest/smokeuiv)
-const PATTERNS = ['e2e%', 'bdg%', 'thx%', 'byptest%', 'nefx%', 'uivtest%', 'smokeuiv%', 'cr_%', 'xy_%'];
+// Pola akun test aktual (dari test-api.sh: byptest*, e2e specs: bdg_/thx/e2ebyp/dd_, historis: cr_/xy_/nefx/uivtest/smokeuiv)
+const PATTERNS = ['e2e%', 'bdg%', 'thx%', 'byptest%', 'nefx%', 'uivtest%', 'smokeuiv%', 'cr_%', 'xy_%', 'dd_%'];
 
 (async () => {
   let rows;

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import Badge from '@/components/Badge';
+import SmartDropdown from '@/components/SmartDropdown';
 import { formatCount } from '@/lib/format';
 import { NAME_EFFECT_THEMES, NAME_EFFECT_FX, nameEffectClass } from '@/lib/nameEffects';
 import { PROFILE_THEMES, themeClasses, themeClassNames } from '@/lib/profileThemes';
@@ -16,7 +17,6 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [message, setMessage] = useState('');
-  const [menuFor, setMenuFor] = useState<string | null>(null);
   const [action, setAction] = useState<{ type: ActionType; userId: string; username: string } | null>(null);
   const [roleInput, setRoleInput] = useState('user');
   const [badgesInput, setBadgesInput] = useState<string[]>([]);
@@ -59,7 +59,6 @@ export default function AdminUsers() {
     if (d.success) { setMessage('Role & badges updated'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
-    setMenuFor(null);
   }
 
   function toggleBadge(id: string) {
@@ -81,7 +80,6 @@ export default function AdminUsers() {
     if (d.success) { setMessage('Name effect updated'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
-    setMenuFor(null);
   }
 
   async function saveProfileTheme(userId: string, theme: string) {
@@ -95,7 +93,6 @@ export default function AdminUsers() {
     if (d.success) { setMessage('Profile theme updated'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
-    setMenuFor(null);
   }
 
   async function toggleBan(userId: string, currentBanned: boolean) {
@@ -109,7 +106,6 @@ export default function AdminUsers() {
     if (d.success) { setMessage(currentBanned ? 'Unbanned' : 'Banned'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
-    setMenuFor(null);
   }
 
   async function toggleVerify(userId: string, currentVerified: boolean) {
@@ -122,7 +118,6 @@ export default function AdminUsers() {
     const d = await res.json();
     if (d.success) { setMessage(currentVerified ? 'Unverified' : 'Verified'); loadUsers(); }
     else setMessage(d.error);
-    setMenuFor(null);
   }
 
   async function confirmDelete() {
@@ -136,7 +131,6 @@ export default function AdminUsers() {
     if (d.success) { setMessage('User deleted'); loadUsers(); }
     else setMessage(d.error);
     setAction(null);
-    setMenuFor(null);
   }
 
   const openAction = (type: ActionType, u: any) => {
@@ -147,7 +141,6 @@ export default function AdminUsers() {
     if (type === 'effect') setNameEffectIdInput(u.name_effect?.id || '');
     if (type === 'theme') setThemeInput(u.theme || 'default');
     setAction({ type, userId: u.id, username: u.username });
-    setMenuFor(null);
   };
 
   const isSelf = (id: string) => id === currentUserId;
@@ -213,32 +206,27 @@ export default function AdminUsers() {
                     <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts</p>
                   </div>
                 </div>
-                <div className="relative">
-                  <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)}
-                    className="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition">⋯</button>
-                  {menuFor === u.id && (
-                    <>
-                      <div className="fixed inset-0 z-30" onClick={() => setMenuFor(null)} />
-                      <div className="absolute right-0 top-full z-40 mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
-                        <button onClick={() => toggleVerify(u.id, !!u.verified)} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.verified ? 'text-zinc-400' : 'text-sky-400'}`}>
-                          {u.verified ? 'Unverify' : 'Verify'}
-                        </button>
-                        <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>
-                        <button onClick={() => openAction('effect', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Name Effect</button>
-                        <button onClick={() => openAction('theme', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Profile Theme</button>
-                        {!isSelf(u.id) && (
-                          <button onClick={() => openAction(u.banned ? 'unban' : 'ban', u)}
-                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.banned ? 'text-green-400' : 'text-red-400'}`}>
-                            {u.banned ? 'Unban' : 'Ban'}
-                          </button>
-                        )}
-                        {!isSelf(u.id) && (
-                          <button onClick={() => openAction('delete', u)} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Delete User</button>
-                        )}
-                      </div>
-                    </>
+                <SmartDropdown
+                  trigger="⋯"
+                  triggerClass="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition"
+                  menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+                >
+                  <button onClick={() => toggleVerify(u.id, !!u.verified)} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.verified ? 'text-zinc-400' : 'text-sky-400'}`}>
+                    {u.verified ? 'Unverify' : 'Verify'}
+                  </button>
+                  <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>
+                  <button onClick={() => openAction('effect', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Name Effect</button>
+                  <button onClick={() => openAction('theme', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Profile Theme</button>
+                  {!isSelf(u.id) && (
+                    <button onClick={() => openAction(u.banned ? 'unban' : 'ban', u)}
+                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.banned ? 'text-green-400' : 'text-red-400'}`}>
+                      {u.banned ? 'Unban' : 'Ban'}
+                    </button>
                   )}
-                </div>
+                  {!isSelf(u.id) && (
+                    <button onClick={() => openAction('delete', u)} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Delete User</button>
+                  )}
+                </SmartDropdown>
               </div>
             </div>
           ))}

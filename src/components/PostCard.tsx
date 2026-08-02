@@ -5,6 +5,7 @@ import { Heart, MessageCircle, Link2 } from 'lucide-react';
 import Avatar from './Avatar';
 import UserIdentity from './UserIdentity';
 import ConfirmModal from './ConfirmModal';
+import SmartDropdown from './SmartDropdown';
 import { formatCount } from '@/lib/format';
 import { themeClasses } from '@/lib/profileThemes';
 import type { BadgeData } from './Badge';
@@ -29,7 +30,6 @@ function renderContent(content: string) {
 export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { post: Post; currentUserId?: string; onUpdate?: () => void; onDelete?: (id: string) => void }) {
   const [liked, setLiked] = useState(post.liked_by_me);
   const [likeCount, setLikeCount] = useState(post.like_count);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [showDelete, setShowDelete] = useState(false);
@@ -56,7 +56,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
       body: JSON.stringify({ post_id: post.id, content: editContent }),
     });
     setEditSaving(false);
-    if (res.ok) { setEditing(false); setMenuOpen(false); onUpdate?.(); }
+    if (res.ok) { setEditing(false); onUpdate?.(); }
   }
 
   async function handleDelete() {
@@ -68,14 +68,13 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
   async function handleReport(e: React.FormEvent) {
     e.preventDefault();
     await fetch('/api/reports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ post_id: post.id, reason: reportReason }) });
-    setShowReport(false); setReportReason(''); setMenuOpen(false);
+    setShowReport(false); setReportReason('');
   }
 
   async function copyText(text: string) {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      setMenuOpen(false);
       setTimeout(() => setCopied(false), 1500);
     } catch {}
   }
@@ -96,30 +95,26 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: { 
           <UserIdentity displayName={post.display_name} verified={post.verified} role={post.role} badges={post.badges} nameEffect={post.name_effect} />
         </Link>
         {currentUserId && (
-          <div className="relative">
-            <button onClick={() => setMenuOpen(o => !o)} className="text-zinc-600 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition">⋯</button>
-            {menuOpen && (
+          <SmartDropdown
+            trigger="⋯"
+            triggerClass="text-zinc-600 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition"
+            menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+          >
+            {isOwn ? (
               <>
-                <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-full z-40 mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
-                  {isOwn ? (
-                    <>
-                      {isEditable && !editing && (
-                        <button onClick={() => { setEditing(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit</button>
-                      )}
-                      <button onClick={() => copyText(post.content)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Copy text</button>
-                      <button onClick={() => { setShowDelete(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Delete</button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => copyText(post.content)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Copy text</button>
-                      <button onClick={() => { setShowReport(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Report</button>
-                    </>
-                  )}
-                </div>
+                {isEditable && !editing && (
+                  <button onClick={() => setEditing(true)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit</button>
+                )}
+                <button onClick={() => copyText(post.content)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Copy text</button>
+                <button onClick={() => setShowDelete(true)} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Delete</button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => copyText(post.content)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Copy text</button>
+                <button onClick={() => setShowReport(true)} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Report</button>
               </>
             )}
-          </div>
+          </SmartDropdown>
         )}
       </div>
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Badge from '@/components/Badge';
 import ConfirmModal from '@/components/ConfirmModal';
+import SmartDropdown from '@/components/SmartDropdown';
 import { BADGE_THEMES, BADGE_EFFECTS, badgeThemeClass, badgeEffectClass } from '@/lib/badges';
 
 export default function AdminBadges() {
@@ -10,7 +11,6 @@ export default function AdminBadges() {
   const [message, setMessage] = useState('');
   const [showDelete, setShowDelete] = useState<any>(null);
   const [editing, setEditing] = useState<any>(null);
-  const [menuFor, setMenuFor] = useState<string | null>(null);
 
   const [nameInput, setNameInput] = useState('');
   const [themeInput, setThemeInput] = useState('violet');
@@ -124,25 +124,20 @@ export default function AdminBadges() {
                 <span className="text-zinc-500 text-xs shrink-0">{b.grant_count} user</span>
                 {!b.active && <span className="text-[10px] bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">nonaktif</span>}
               </div>
-              <div className="relative shrink-0">
-                <button onClick={() => setMenuFor(menuFor === b.id ? null : b.id)}
-                  className="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition">⋯</button>
-                {menuFor === b.id && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setMenuFor(null)} />
-                    <div className="absolute right-0 top-full z-40 mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
-                      <button onClick={() => { updateBadge(b.id, { active: !b.active }); setMenuFor(null); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">
-                        {b.active ? 'Nonaktifkan' : 'Aktifkan'}
-                      </button>
-                      <button onClick={() => { setEditing(b); setMenuFor(null); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit</button>
-                      <button onClick={() => { setShowDelete(b); setMenuFor(null); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Hapus</button>
-                    </div>
-                  </>
-                )}
-              </div>
+              <SmartDropdown
+                trigger="⋯"
+                triggerClass="text-zinc-500 hover:text-white text-lg leading-none px-2 py-1 rounded hover:bg-zinc-800 transition shrink-0"
+                menuClass="w-44 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+              >
+                <button onClick={() => updateBadge(b.id, { active: !b.active })}
+                  className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">
+                  {b.active ? 'Nonaktifkan' : 'Aktifkan'}
+                </button>
+                <button onClick={() => setEditing(b)}
+                  className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit</button>
+                <button onClick={() => setShowDelete(b)}
+                  className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-800">Hapus</button>
+              </SmartDropdown>
             </div>
           ))}
         </div>
