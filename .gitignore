@@ -9,3 +9,4 @@ tsconfig.tsbuildinfo
 # testing
 test-results/
 playwright-report/
+docs/gate-evidence/

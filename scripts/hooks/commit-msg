@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# commit-msg (versioned via scripts/hooks/ + core.hooksPath)
+# Pesan commit WAJIB berisi baris "Gate:" dengan bukti lengkap + hasil review agent.
+# Darurat: [skip-gate] + baris "Skip-reason:" (alasan wajib tertulis, tidak disarankan).
+set -u
+MSG_FILE="$1"
+MSG=$(cat "$MSG_FILE")
+FIRST_LINE=$(echo "$MSG" | head -1)
+
+case "$FIRST_LINE" in
+  Merge*|merge:*|Revert*|revert:*) exit 0 ;;
+esac
+
+if echo "$MSG" | grep -q "\[skip-gate\]"; then
+  if echo "$MSG" | grep -q "^Skip-reason:"; then
+    echo "[commit-msg] [skip-gate] + Skip-reason diterima (darurat)"
+    exit 0
+  fi
+  echo "[commit-msg] FAIL: [skip-gate] WAJIB disertai baris 'Skip-reason: <alasan>'"
+  exit 1
+fi
+
+GATE_LINE=$(echo "$MSG" | grep -E "^Gate:" | head -1)
+if [ -z "$GATE_LINE" ]; then
+  echo "[commit-msg] FAIL: pesan commit WAJIB berisi baris bukti gate. Contoh:"
+  echo "Gate: tsc OK, unit 35/35, test:api 62/62, e2e 7/7, review: code-reviewer PASS, security-reviewer PASS"
+  exit 1
+fi
+
+check() {
+  echo "$GATE_LINE" | grep -qE "$1" || {
+    echo "[commit-msg] FAIL: baris Gate kurang lengkap — butuh: $2"
+    exit 1
+  }
+}
+
+check "tsc (OK|PASS)"             "tsc OK/PASS"
+check "unit [0-9]+/[0-9]+"        "unit X/X (angka)"
+check "test:api [0-9]+/[0-9]+"    "test:api X/X (angka)"
+check "e2e [0-9]+/[0-9]+"         "e2e X/X (angka)"
+check "code-reviewer (PASS|FAIL|OK)"   "hasil code-reviewer"
+check "security-reviewer (PASS|FAIL|OK)" "hasil security-reviewer"
+
+echo "[commit-msg] Gate OK"
+exit 0

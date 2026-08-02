@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# pre-commit (versioned via scripts/hooks/ + core.hooksPath)
+# Gate ringan: tsc + unit + sweep + secrets scan + bukti full-gate.
+# Full gate (test:api + e2e) WAJIB dijalankan manual: bash scripts/gate.sh --save
+set -u
+cd "$(dirname "$0")/../.." || exit 1
+
+if [ "${GATE_SKIP:-0}" = "1" ]; then
+  echo "[pre-commit] GATE_SKIP=1 — dilewati (commit-msg masih wajib [skip-gate] + Skip-reason)"
+  exit 0
+fi
+
+if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+  echo "[pre-commit] merge commit — skip gate ringan"
+  exit 0
+fi
+
+# 1. Bukti full gate: wajib ada evidence file fresh (< 30 menit) dari `bash scripts/gate.sh --save`
+EVIDENCE_DIR="docs/gate-evidence"
+LATEST=$(ls -t "$EVIDENCE_DIR" 2>/dev/null | head -1)
+if [ -z "$LATEST" ] || [ $(( $(date +%s) - $(stat -c %Y "$EVIDENCE_DIR/$LATEST" 2>/dev/null || echo 0) )) -gt 1800 ]; then
+  echo "[pre-commit] FAIL: tidak ada bukti full gate fresh di $EVIDENCE_DIR/"
+  echo "           Jalankan dulu: bash scripts/gate.sh --save"
+  echo "           (tsc + unit + test:api + e2e + secrets + sweep)"
+  exit 1
+fi
+echo "[pre-commit] bukti gate fresh: $EVIDENCE_DIR/$LATEST"
+
+# 2. tsc (bersihkan cache typegen dulu — tsconfig include .next/types)
+rm -rf .next tsconfig.tsbuildinfo
+echo "[pre-commit] tsc..."
+npx tsc --noEmit || { echo "[pre-commit] FAIL: tsc"; exit 1; }
+echo "[pre-commit] tsc OK"
+
+# 3. Unit
+echo "[pre-commit] unit..."
+npm test --silent > /tmp/opencode/precommit-unit.log 2>&1 || { echo "[pre-commit] FAIL: unit test"; tail -20 /tmp/opencode/precommit-unit.log; exit 1; }
+echo "[pre-commit] unit OK"
+
+# 4. Sweep akun test (read-only; DB error = SKIP)
+node scripts/sweep-test-accounts.js || { echo "[pre-commit] FAIL: akun test sisa / state admin rusak"; exit 1; }
+
+# 5. Secrets scan: tracked + staged + untracked, case-insensitive, nilai di-redaksi (filename:line)
+echo "[pre-commit] secrets scan..."
+FILES=$(git ls-files -z; git ls-files --others --exclude-standard -z; git diff --cached --name-only -z)
+SECRETS=$(echo "$FILES" | xargs -0 -r grep -inE "ghp_[A-Za-z0-9]{20,}|github_pat_|gho_|ghu_|ghs_|sk-[A-Za-z0-9]{20,}|sk-proj-|sk-ant-|sk_live_|vercel_token=|github_token=|jwt_secret=|database_url=|x-access-token:|vercel_automation_bypass_secret=|postgres://" 2>/dev/null | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh)" || true)
+if [ -n "$SECRETS" ]; then
+  echo "[pre-commit] FAIL: kemungkinan secret (lihat file:line):"
+  echo "$SECRETS" | cut -d: -f1-2 | sort -u
+  exit 1
+fi
+echo "[pre-commit] secrets scan OK"
+
+echo "[pre-commit] GATE RINGAN PASS"
+exit 0

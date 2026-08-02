@@ -1,0 +1,55 @@
+name: CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Secrets scan (semua tracked files, case-insensitive)
+        run: |
+          if git ls-files -z | xargs -0 grep -inE \
+            "ghp_[A-Za-z0-9]{20,}|github_pat_|gho_|ghu_|ghs_|sk-[A-Za-z0-9]{20,}|sk-proj-|sk-ant-|sk_live_|vercel_token=|github_token=|jwt_secret=|database_url=|x-access-token:|vercel_automation_bypass_secret=|postgres://" \
+            | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh)"; then
+            echo "::error::Kemungkinan secret di tracked files"
+            exit 1
+          fi
+
+      - name: console.log scan (src)
+        run: |
+          if grep -rn "console.log" src/ | grep -v ".test."; then
+            echo "::error::console.log ditemukan di src/"
+            exit 1
+          fi
+
+  # DB sweep: main-only + butuh secret — kode PR TIDAK pernah diberi DATABASE_URL
+  db-sweep:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Sweep akun test + state admin
+        run: node scripts/sweep-test-accounts.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
