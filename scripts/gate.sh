@@ -97,9 +97,16 @@ if [ "$SERVER_STARTED" = "1" ]; then
 fi
 
 # 5. Secrets scan: tracked + untracked + staged, case-insensitive, nilai di-redaksi (filename:line)
+# Catatan: jangan simpan pola ke variabel via $(...) dengan null byte — corrupt path. Pipe langsung.
 log "== STEP: secrets scan =="
-FILES=$(git ls-files -z; git ls-files --others --exclude-standard -z; git diff --cached --name-only -z)
-SECRETS=$(echo "$FILES" | xargs -0 -r grep -inE "ghp_[A-Za-z0-9]{20,}|github_pat_|gho_|ghu_|ghs_|sk-[A-Za-z0-9]{20,}|sk-proj-|sk-ant-|sk_live_|vercel_token=|github_token=|jwt_secret=|database_url=|x-access-token:|vercel_automation_bypass_secret=|postgres://" 2>/dev/null | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh)" || true)
+SECRETS=$(
+  {
+    git ls-files -z
+    git ls-files --others --exclude-standard -z
+    git diff --cached --name-only -z
+  } | xargs -0 -r grep -inE "ghp_[A-Za-z0-9]{20,}|github_pat_|gho_|ghu_|ghs_|sk-[A-Za-z0-9]{20,}|sk-proj-|sk-ant-|sk_live_|vercel_token=|github_token=|jwt_secret=|database_url=|x-access-token:|vercel_automation_bypass_secret=|postgres://" 2>/dev/null \
+  | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js)|\.github/workflows/ci\.yml" || true
+)
 if [ -n "$SECRETS" ]; then
   log "SEKRET KETEMU (file:line — nilai di-redaksi):"
   echo "$SECRETS" | cut -d: -f1-2 | sort -u
