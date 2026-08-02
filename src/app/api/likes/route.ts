@@ -17,7 +17,6 @@ export const POST = withUser(async (req, user) => {
   const existing = await sql`SELECT 1 FROM likes WHERE user_id = ${user.id} AND post_id = ${post_id}`;
   if (existing.length > 0) {
     if (post[0].user_id !== user.id) {
-      await sql`UPDATE profiles SET points = GREATEST(0, points - 2) WHERE id = ${post[0].user_id}`;
       await sql`DELETE FROM notifications WHERE type = 'like' AND user_id = ${post[0].user_id} AND actor_id = ${user.id} AND post_id = ${post_id}`;
     }
     await sql`DELETE FROM likes WHERE user_id = ${user.id} AND post_id = ${post_id}`;
@@ -26,7 +25,6 @@ export const POST = withUser(async (req, user) => {
 
   await sql`INSERT INTO likes (user_id, post_id) VALUES (${user.id}, ${post_id})`;
   if (post[0].user_id !== user.id) {
-    await sql`UPDATE profiles SET points = points + 2 WHERE id = ${post[0].user_id}`;
     await sql`INSERT INTO notifications (user_id, actor_id, type, post_id) VALUES (${post[0].user_id}, ${user.id}, 'like', ${post_id})`;
   }
   return ok({ liked: true }, 201);

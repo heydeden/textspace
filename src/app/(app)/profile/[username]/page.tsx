@@ -2,12 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import PostCard from '@/components/PostCard';
-import PtsBadge from '@/components/PtsBadge';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import Avatar from '@/components/Avatar';
 import Badge from '@/components/Badge';
 import { formatCount } from '@/lib/format';
-import { pointsLevel } from '@/lib/points';
 import { nameEffectClass } from '@/lib/nameEffects';
 import { themeClasses } from '@/lib/profileThemes';
 
@@ -117,12 +115,11 @@ export default function ProfilePage() {
           <div className="flex items-center justify-center gap-1 flex-wrap">
             {roleBadge(profile?.role)}
             {(profile?.badges || []).map((b: { id: string; name: string; theme?: string; effect?: string }) => <Badge key={b.id} badge={b} />)}
-            <PtsBadge pts={profile?.points} />
           </div>
         </div>
         <p className="text-zinc-500 text-sm">@{username}</p>
         <p className="text-zinc-400 text-sm mt-2">{profile?.bio}</p>
-        <div className="grid grid-cols-5 gap-2 mt-4 max-w-md mx-auto">
+        <div className="grid grid-cols-4 gap-2 mt-4 max-w-md mx-auto">
           <div className="flex flex-col items-center">
             <span className="text-base font-bold text-white">{formatCount(profile?.post_count ?? posts.length)}</span>
             <span className="text-[11px] text-zinc-500">Posts</span>
@@ -139,12 +136,7 @@ export default function ProfilePage() {
             <span className="text-base font-bold text-white">{formatCount(profile?.like_count ?? 0)}</span>
             <span className="text-[11px] text-zinc-500">Likes</span>
           </div>
-          <div className="flex flex-col items-center">
-            <span className="text-base font-bold text-white">{formatCount(profile?.points || 0)}</span>
-            <span className="text-[11px] text-zinc-500">Points</span>
-          </div>
         </div>
-        <p className="text-zinc-600 text-xs mt-2">Level: {pointsLevel(profile?.points || 0)}</p>
         {isMe ? (
           <button
             onClick={() => router.push('/settings')}

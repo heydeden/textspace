@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect, type ReactNode } from 'react';
-import { Home, Menu, Lock, User, Search, Trophy, Bell, MessageCircle, Shield, Settings, LogOut } from 'lucide-react';
+import { Home, Menu, Lock, User, Search, Bell, MessageCircle, Shield, Settings, LogOut } from 'lucide-react';
 
 export default function Navbar({ username }: { username?: string }) {
   const [role, setRole] = useState('');
@@ -68,7 +68,6 @@ export default function Navbar({ username }: { username?: string }) {
             <div className="space-y-1">
               <MenuItem icon={<User className="w-5 h-5" />} label="Profile" href={`/profile/${username}`} onClick={() => setMenuOpen(false)} />
               <MenuItem icon={<Search className="w-5 h-5" />} label="Search" href="/search" onClick={() => setMenuOpen(false)} />
-              <MenuItem icon={<Trophy className="w-5 h-5" />} label="Leaderboard" href="/leaderboard" onClick={() => setMenuOpen(false)} />
               <MenuItem icon={<Bell className="w-5 h-5" />} label={`Notifications${unread > 0 ? ` (${unread})` : ''}`} href="/notifications" onClick={() => setMenuOpen(false)} />
               <MenuItem icon={<MessageCircle className="w-5 h-5" />} label="Messages" href="/messages" onClick={() => setMenuOpen(false)} />
               {role === 'admin' && <MenuItem icon={<Shield className="w-5 h-5" />} label="Admin Panel" href="/admin" onClick={() => setMenuOpen(false)} />}
@@ -87,7 +86,6 @@ export default function Navbar({ username }: { username?: string }) {
             <Link href="/feed" className="text-xl font-bold text-blue-500">TextSpace</Link>
             <Link href="/feed" className="text-sm text-zinc-400 hover:text-white">Feed</Link>
             <Link href="/search" className="text-sm text-zinc-400 hover:text-white">Search</Link>
-            <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-white">Top</Link>
             <Link href="/notifications" className="text-sm text-zinc-400 hover:text-white relative">Notif{unread > 0 && <span className="ml-1 text-red-400">({unread})</span>}</Link>
             {username && <Link href={`/profile/${username}`} className="text-sm text-zinc-400 hover:text-white">Profile</Link>}
             {role === 'admin' && <Link href="/admin" className="text-sm text-amber-400 hover:text-amber-300">Admin</Link>}

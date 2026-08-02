@@ -23,7 +23,6 @@ export async function initDB() {
     password_hash TEXT NOT NULL,
     bio TEXT DEFAULT '',
     role VARCHAR(20) DEFAULT 'user',
-    points INT DEFAULT 0,
     banned BOOLEAN DEFAULT false,
     verified BOOLEAN DEFAULT false,
     custom_roles TEXT[] DEFAULT '{}',
@@ -113,8 +112,8 @@ export async function initDB() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
   await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS read BOOLEAN DEFAULT false`;
+  await db`ALTER TABLE profiles DROP COLUMN IF EXISTS points`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`;
-  await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS points INT DEFAULT 0`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS banned BOOLEAN DEFAULT false`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT false`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS custom_roles TEXT[] DEFAULT '{}'`;

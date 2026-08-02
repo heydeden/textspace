@@ -1,4 +1,3 @@
-import PtsBadge from './PtsBadge';
 import VerifiedBadge from './VerifiedBadge';
 import Badge, { type BadgeData } from './Badge';
 import { nameEffectClass } from '@/lib/nameEffects';
@@ -10,11 +9,10 @@ export interface NameEffectData {
   effect?: string;
 }
 
-export default function UserIdentity({ displayName, verified, role, pts, badges, nameEffect, size = 'sm' }: {
+export default function UserIdentity({ displayName, verified, role, badges, nameEffect, size = 'sm' }: {
   displayName: string;
   verified?: boolean;
   role?: string;
-  pts?: number;
   badges?: BadgeData[];
   nameEffect?: NameEffectData | null;
   size?: 'sm' | 'md';
@@ -33,7 +31,6 @@ export default function UserIdentity({ displayName, verified, role, pts, badges,
         {role === 'admin' && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">Admin</span>}
         {role === 'mod' && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">Mod</span>}
         {(badges || []).map(b => <Badge key={b.id} badge={b} />)}
-        <PtsBadge pts={pts} />
       </div>
     </div>
   );

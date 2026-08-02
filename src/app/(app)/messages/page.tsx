@@ -32,7 +32,7 @@ export default function MessagesPage() {
               className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition">
               <Avatar style={c.avatar_style} seed={c.avatar_seed} username={c.username} displayName={c.display_name} size="md" />
               <div className="min-w-0 flex-1">
-                <UserIdentity displayName={c.display_name} verified={c.verified} role={c.role} badges={c.badges} nameEffect={c.name_effect} pts={c.points} size="md" />
+                <UserIdentity displayName={c.display_name} verified={c.verified} role={c.role} badges={c.badges} nameEffect={c.name_effect} size="md" />
                 <p className="text-zinc-500 text-xs truncate">{c.last_message}</p>
               </div>
             </Link>

@@ -42,7 +42,7 @@ export default function ChatPage() {
     <div className="flex flex-col h-[calc(100vh-10rem)]">
       <Link href={`/profile/${other?.username}`} className="flex items-center gap-2 mb-4 min-w-0">
         <Avatar style={other?.avatar_style} seed={other?.avatar_seed} username={other?.username} displayName={other?.display_name} size="sm" />
-        <UserIdentity displayName={other?.display_name || ''} verified={other?.verified} role={other?.role} badges={other?.badges} nameEffect={other?.name_effect} pts={other?.points} />
+          <UserIdentity displayName={other?.display_name || ''} verified={other?.verified} role={other?.role} badges={other?.badges} nameEffect={other?.name_effect} />
       </Link>
 
       <div className="flex-1 overflow-y-auto space-y-3 mb-4">

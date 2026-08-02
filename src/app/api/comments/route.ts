@@ -10,7 +10,7 @@ export const GET = withUser(async (req, user) => {
 
   const rows = await sql`
     SELECT c.id, c.content, c.created_at, c.parent_id,
-      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.avatar_style, u.avatar_seed,
+      u.id as user_id, u.username, u.display_name, u.role, u.verified, u.avatar_style, u.avatar_seed,
      (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = u.name_effect_id AND ne.active = true) as name_effect,
      (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = u.id) as badges
     FROM comments c
@@ -50,14 +50,13 @@ export const POST = withUser(async (req, user) => {
       RETURNING id, content, created_at, parent_id, user_id
     )
     SELECT ins.id, ins.content, ins.created_at, ins.parent_id,
-      u.id as user_id, u.username, u.display_name, u.role, u.points, u.verified, u.avatar_style, u.avatar_seed,
+      u.id as user_id, u.username, u.display_name, u.role, u.verified, u.avatar_style, u.avatar_seed,
      (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = u.name_effect_id AND ne.active = true) as name_effect,
      (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = u.id) as badges
     FROM ins JOIN profiles u ON ins.user_id = u.id
   `;
 
   if (post[0].user_id !== user.id) {
-    await sql`UPDATE profiles SET points = points + 3 WHERE id = ${post[0].user_id}`;
     await sql`INSERT INTO notifications (user_id, actor_id, type, post_id, reference_id) VALUES (${post[0].user_id}, ${user.id}, 'comment', ${post_id}, ${rows[0].id})`;
   }
 
@@ -90,11 +89,6 @@ export const DELETE = withUser(async (req, user) => {
   const comment = await sql`SELECT user_id FROM comments WHERE id = ${comment_id}`;
   if (comment.length === 0) return err('Comment not found', 404);
   if (comment[0].user_id !== user.id) return err('Not your comment', 403);
-
-  const post = await sql`SELECT user_id FROM posts WHERE id = (SELECT post_id FROM comments WHERE id = ${comment_id})`;
-  if (post.length > 0 && post[0].user_id !== user.id) {
-    await sql`UPDATE profiles SET points = GREATEST(0, points - 3) WHERE id = ${post[0].user_id}`;
-  }
 
   await sql`DELETE FROM comments WHERE id = ${comment_id} OR parent_id = ${comment_id} OR parent_id IN (SELECT id FROM comments WHERE parent_id = ${comment_id})`;
   await sql`DELETE FROM notifications WHERE reference_id = ${comment_id} OR reference_id IN (SELECT id FROM comments WHERE parent_id = ${comment_id})`;

@@ -7,7 +7,7 @@ import { formatCount } from '@/lib/format';
 import { NAME_EFFECT_THEMES, NAME_EFFECT_FX, nameEffectClass } from '@/lib/nameEffects';
 import { PROFILE_THEMES, themeClasses, themeClassNames } from '@/lib/profileThemes';
 
-type ActionType = 'points' | 'role' | 'effect' | 'theme' | 'ban' | 'unban' | 'delete';
+type ActionType = 'role' | 'effect' | 'theme' | 'ban' | 'unban' | 'delete';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
@@ -18,7 +18,6 @@ export default function AdminUsers() {
   const [message, setMessage] = useState('');
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [action, setAction] = useState<{ type: ActionType; userId: string; username: string } | null>(null);
-  const [pointsInput, setPointsInput] = useState('');
   const [roleInput, setRoleInput] = useState('user');
   const [badgesInput, setBadgesInput] = useState<string[]>([]);
   const [allBadges, setAllBadges] = useState<any[]>([]);
@@ -113,22 +112,6 @@ export default function AdminUsers() {
     setMenuFor(null);
   }
 
-  async function setPoints(userId: string, value: string) {
-    setMessage('');
-    const pts = Number(value);
-    if (value.trim() === '' || !Number.isInteger(pts) || pts < 0 || pts > 1000000) { setMessage('Points must be integer 0-1000000'); return; }
-    const res = await fetch('/api/admin/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, points: pts }),
-    });
-    const d = await res.json();
-    if (d.success) { setMessage('Points updated'); loadUsers(); }
-    else setMessage(d.error);
-    setAction(null);
-    setMenuFor(null);
-  }
-
   async function toggleVerify(userId: string, currentVerified: boolean) {
     setMessage('');
     const res = await fetch('/api/admin/users', {
@@ -157,7 +140,6 @@ export default function AdminUsers() {
   }
 
   const openAction = (type: ActionType, u: any) => {
-    if (type === 'points') setPointsInput(String(u.points));
     if (type === 'role') {
       setRoleInput(u.role || 'user');
       setBadgesInput((u.badges || []).map((b: any) => b.id));
@@ -228,7 +210,7 @@ export default function AdminUsers() {
                       {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
                       {(u.badges || []).map((b: any) => <Badge key={b.id} badge={b} />)}
                     </div>
-                    <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts · {u.points} pts</p>
+                    <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts</p>
                   </div>
                 </div>
                 <div className="relative">
@@ -241,7 +223,6 @@ export default function AdminUsers() {
                         <button onClick={() => toggleVerify(u.id, !!u.verified)} className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 ${u.verified ? 'text-zinc-400' : 'text-sky-400'}`}>
                           {u.verified ? 'Unverify' : 'Verify'}
                         </button>
-                        <button onClick={() => openAction('points', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Points</button>
                         <button onClick={() => openAction('role', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Edit Role</button>
                         <button onClick={() => openAction('effect', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Name Effect</button>
                         <button onClick={() => openAction('theme', u)} className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800">Profile Theme</button>
@@ -268,22 +249,6 @@ export default function AdminUsers() {
               <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="text-zinc-500 disabled:opacity-30 text-sm">Next</button>
             </div>
           )}
-        </div>
-      )}
-
-      {action?.type === 'points' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setAction(null)}>
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-white font-semibold text-lg mb-1">Edit Points</h3>
-            <p className="text-zinc-500 text-xs mb-4">@{action.username}</p>
-            <input type="number" min={0} max={1000000} value={pointsInput} onChange={e => setPointsInput(e.target.value)} autoFocus
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500" />
-            <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setAction(null)} className="px-5 py-2 rounded-xl text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-800 transition">Cancel</button>
-              <button onClick={() => setPoints(action.userId, pointsInput)}
-                className="px-5 py-2 rounded-xl text-sm bg-blue-600 text-white font-medium hover:bg-blue-700 transition">Save</button>
-            </div>
-          </div>
         </div>
       )}
 

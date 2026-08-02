@@ -23,7 +23,7 @@ export const GET = withAdmin(async (req) => {
 
   params.push(limit, offset);
   const rows = await query(
-    `SELECT id, username, display_name, bio, role, points, banned, verified, theme, avatar_style, created_at::text,
+    `SELECT id, username, display_name, bio, role, banned, verified, theme, avatar_style, created_at::text,
       (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = profiles.name_effect_id AND ne.active = true) as name_effect,
       (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id) as badges,
       (SELECT COUNT(*)::int FROM posts WHERE user_id = profiles.id) as post_count
@@ -34,7 +34,7 @@ export const GET = withAdmin(async (req) => {
 });
 
 export const PATCH = withAdmin(async (req, user) => {
-  const { user_id, role, banned, points, verified, name_effect_id, theme, badges } = await req.json();
+  const { user_id, role, banned, verified, name_effect_id, theme, badges } = await req.json();
   if (!user_id) return err('user_id required');
   if (!isUUID(user_id)) return err('Invalid user_id');
   if (user_id === user.id && role !== undefined && role !== 'admin') return err('Cannot demote yourself', 403);
@@ -52,11 +52,6 @@ export const PATCH = withAdmin(async (req, user) => {
     if (user_id === user.id) return err('Cannot ban yourself', 403);
     updates.push(`banned = $${idx++}`);
     params.push(banned);
-  }
-  if (points !== undefined) {
-    if (!Number.isInteger(points) || points < 0 || points > 1000000) return err('Points must be integer 0-1000000');
-    updates.push(`points = $${idx++}`);
-    params.push(points);
   }
   if (verified !== undefined) {
     if (typeof verified !== 'boolean') return err('verified must be boolean');

@@ -8,4 +8,5 @@ export default defineConfig({
     baseURL: process.env.BASE_URL || 'http://localhost:3001',
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
+  workers: 1,
 });
