@@ -38,6 +38,15 @@ jobs:
             exit 1
           fi
 
+      - name: npm audit (dependency vulnerabilities)
+        run: npm audit --audit-level=high
+
+      - name: Gitleaks (secret scanning)
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o /tmp/gitleaks.tgz
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          /tmp/gitleaks detect --source . --config .gitleaks.toml --no-banner --redact
+
   # DB sweep: main-only + butuh secret — kode PR TIDAK pernah diberi DATABASE_URL
   db-sweep:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

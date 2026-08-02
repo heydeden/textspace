@@ -6,8 +6,9 @@
 - **DB Neon SHARED** antar env: e2e/test-api yang menulis state admin (verified/badges/name_effect_id/theme) WAJIB restore state asli; akun test WAJIB dihapus
 
 ## GATE WAJIB sebelum commit — `bash scripts/gate.sh --save` (exit non-zero = commit DILARANG)
-tsc → unit → test:api → e2e → secrets scan → console.log scan → sweep akun test (read-only)
+tsc → unit → test:api → e2e → secrets scan → console.log scan → sweep akun test → npm audit → gitleaks (read-only)
 `--save` wajib: bukti tersimpan di `docs/gate-evidence/` — pre-commit MENOLAK kalau bukti fresh (< 30 menit) tidak ada.
+npm audit/gitleaks di lokal: network/binary tidak ada = WARN skip — **CI wajib hijau** (`.github/workflows/ci.yml` menjalankan keduanya tiap push).
 
 Commit TANPA bukti ditolak hook `commit-msg` (versioned di `scripts/hooks/`, aktif via `git config core.hooksPath scripts/hooks` — setup: `bash scripts/install-hooks.sh`). Baris wajib di pesan commit:
 ```

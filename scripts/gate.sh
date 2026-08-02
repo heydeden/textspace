@@ -135,6 +135,32 @@ else
   fail "sweep akun test"
 fi
 
+# 8. npm audit — network error = WARN skip (CI tetap wajib)
+log "== STEP: npm audit =="
+AUDIT_OUT=$(npm audit --audit-level=high 2>&1)
+AUDIT_RC=$?
+if [ "$AUDIT_RC" = "0" ]; then
+  log "OK: npm audit (0 high/critical)"
+elif echo "$AUDIT_OUT" | grep -qiE "ENOTFOUND|EAI_AGAIN|ETIMEDOUT|network|fetch failed|ENETUNREACH"; then
+  log "WARN: npm audit skip (network error di mesin lokal — CI wajib hijau)"
+else
+  log "FAIL: npm audit menemukan vulnerability:"
+  echo "$AUDIT_OUT" | grep -E "Severity|^[a-z@/0-9.-]+ " | head -8
+  fail "npm audit"
+fi
+
+# 9. Gitleaks — binary tidak ada di lokal = WARN skip (CI wajib)
+log "== STEP: gitleaks =="
+if command -v gitleaks >/dev/null 2>&1; then
+  if gitleaks detect --source . --config .gitleaks.toml --no-banner --redact 2>&1 | tail -3; then
+    log "OK: gitleaks (no leaks)"
+  else
+    fail "gitleaks"
+  fi
+else
+  log "WARN: gitleaks binary tidak ada di mesin lokal — skip (CI wajib jalankan)"
+fi
+
 if [ "$FAIL" = "1" ]; then
   log "== GATE GAGAL (langkah gagal:$FAILED_STEPS) — COMMIT DILARANG =="
   wait 2>/dev/null

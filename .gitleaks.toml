@@ -1,0 +1,16 @@
+title = "TextSpace gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "File tooling yang berisi definisi pola regex/placeholder (bukan secret)"
+paths = [
+  '''scripts/gate\.sh''',
+  '''scripts/install-hooks\.sh''',
+  '''scripts/hooks/''',
+  '''scripts/sweep-test-accounts\.js''',
+  '''\.github/workflows/''',
+  '''docs/gate-evidence/''',
+  '''\.gitleaks\.toml''',
+]
