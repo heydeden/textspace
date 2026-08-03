@@ -13,6 +13,26 @@
 - `--save` wajib: bukti tersimpan di `docs/gate-evidence/` — pre-commit MENOLAK kalau bukti tidak fresh (< 30 menit).
 - npm audit/gitleaks di lokal: network/binary tidak ada = WARN skip — **CI wajib hijau** (`.github/workflows/ci.yml`).
 
+## WORKFLOW CEPAT (hemat waktu nunggu — ikuti ini, bukan full gate tiap edit)
+
+Full `gate.sh` = ~5-7 menit. JANGAN jalankan penuh setiap edit. Gunakan step parsial sesuai perubahan:
+
+| Perubahan | Perintah (cepat) |
+|-----------|------------------|
+| Type script | `npx tsc --noEmit` (~20s) |
+| Hanya unit / lib | `npm test` (~3s) |
+| API route | `bash scripts/test-api.sh` (~3m, butuh dev server :3001) |
+| UI/component | `npx tsc --noEmit` + `npm test` + smoke manual |
+| Semua | `bash scripts/gate.sh --save` |
+
+**Aturan:**
+1. Edit kecil → `tsc` + `npm test` saja. Jangan sentuh test:api/e2e.
+2. **Full gate `--save` HANYA 1× di akhir** (semua fitur selesai), bukan per langkah.
+3. Bukti `docs/gate-evidence/` fresh = 30 menit. Setelah gate PASS, commit cepat — jangan re-run gate kalau tak ada perubahan (waktu terbuang).
+4. Test flaky sudah diperbaiki (rate-limit pakai XFF stabil, admin-self e2e timeout, sandbox pakai chromium alpine auto-detect di `playwright.config.ts`). Jangan "perbaiki" lagi tanpa root cause.
+5. Satu sesi besar: baca → TDD → implement → full gate → commit → rilis. Jangan jeda (konteks dingin = re-explore).
+6. Jangan install ulang Chromium / ulang setup sandbox — sudah bekerja (musl → `/usr/bin/chromium`).
+
 Commit TANPA bukti ditolak hook `commit-msg` (di `scripts/hooks/`, aktif via `bash scripts/install-hooks.sh`). Baris wajib di pesan commit:
 
 ```
