@@ -45,7 +45,11 @@ UID1=$(echo "$R" | python3 -c "import json,sys; print(json.load(sys.stdin)['data
 R2=$(curl -s -X POST "$BASE/auth/register" -H 'Content-Type: application/json' \
   -d "{\"username\":\"$U2\",\"display_name\":\"Bypass Two\",\"password\":\"20011400\"}")
 UID2=$(echo "$R2" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
-echo "  user1=$U1 id=$UID1, user2=$U2 id=$UID2"
+U3="${U2}x"
+R3=$(curl -s -X POST "$BASE/auth/register" -H 'Content-Type: application/json' \
+  -d "{\"username\":\"$U3\",\"display_name\":\"Bypass Three\",\"password\":\"20011400\"}")
+UID3=$(echo "$R3" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
+echo "  user1=$U1 id=$UID1, user2=$U2 id=$UID2, user3=$U3 id=$UID3"
 ADM=$(login "setrahden" "200114")
 USR=$(login "$U1" "20011400")
 
@@ -265,9 +269,64 @@ done
 echo "  429 responses: $COUNT"
 if [ "$COUNT" -gt 0 ]; then PASS=$((PASS+1)); echo "  PASS rate limit memicu 429"; else FAIL=$((FAIL+1)); echo "  FAIL rate limit tidak memicu 429 (multi-instance?)"; fi
 
+echo "== 7. Group feed + roles (semua user) =="
+USR2=$(login "$U2" "20011400")
+# U1 = creator/admin. Buat grup publik + grup privat + 1 grup untuk test invalid.
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"NuansaPub\",\"slug\":\"grp-$RANDOM-$RANDOM\",\"description\":\"desc\",\"privacy\":\"public\"}")
+check "create group public valid" 201 "$S"
+PUBGID=$(curl -s -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"NuansaPub\",\"slug\":\"grp-$RANDOM-$RANDOM\",\"description\":\"desc\",\"privacy\":\"public\"}" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
+PRIVGID=$(curl -s -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"NuansaPriv\",\"slug\":\"grp-$RANDOM-$RANDOM\",\"description\":\"\",\"privacy\":\"private\"}" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"\",\"slug\":\"x\",\"privacy\":\"public\"}")
+check "create group empty name" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"A\",\"slug\":\"not-valid!\",\"privacy\":\"public\"}")
+check "invalid slug" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"B\",\"slug\":\"grp-$RANDOM-$RANDOM\",\"privacy\":\"evil\"}")
+check "invalid privacy" 400 "$S"
+DUP_SLUG="dup-slug-$RANDOM-$RANDOM"
+DUPGID=$(curl -s -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"C\",\"slug\":\"$DUP_SLUG\",\"privacy\":\"public\"}" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"D\",\"slug\":\"$DUP_SLUG\",\"privacy\":\"public\"}")
+check "duplicate slug" 409 "$S"
+# Public: U2 join → aktif → post
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR2" -X POST "$BASE/groups/$PUBGID/members")
+check "U2 join public group" 200 "$S"
+R=$(curl -s -H "Cookie: $USR2" -X POST "$BASE/posts" -H 'Content-Type: application/json' -d "{\"content\":\"post dalam grup\",\"group_id\":\"$PUBGID\"}")
+PGRPID=$(echo "$R" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
+check "U2 post ke grup" 201 201
+USR3=$(login "$U3" "20011400")
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR3" -X POST "$BASE/posts" -H 'Content-Type: application/json' -d "{\"content\":\"x\",\"group_id\":\"$PUBGID\"}")
+check "non-member tidak bisa post ke grup" 403 "$S"
+# Feed grup: anggota bisa lihat; global feed exclude post grup
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR2" -X GET "$BASE/posts?group_id=$PUBGID")
+check "anggota baca feed grup" 200 "$S"
+# Private: U2 join → pending → tak bisa lihat → admin approve → bisa
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR2" -X POST "$BASE/groups/$PRIVGID/members")
+check "U2 join private group (pending)" 201 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR2" -X GET "$BASE/posts?group_id=$PRIVGID")
+check "pending member cannot read private feed" 403 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/groups/$PRIVGID/members/$UID2" -H 'Content-Type: application/json' -d "{\"action\":\"approve\"}")
+check "admin approve member" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR2" -X PATCH "$BASE/groups/$PUBGID/members/$UID1" -H 'Content-Type: application/json' -d "{\"action\":\"kick\"}")
+check "member cannot kick (403)" 403 "$S"
+# Role hanya untuk anggota aktif — pending member tidak boleh dipromote
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/groups/$PRIVGID/members/$UID3" -H 'Content-Type: application/json' -d "{\"action\":\"role\",\"role\":\"admin\"}")
+check "promote NON-member (404)" 404 "$S"
+curl -s -o /dev/null -H "Cookie: $USR3" -X POST "$BASE/groups/$PRIVGID/members" 2>/dev/null
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/groups/$PRIVGID/members/$UID3" -H 'Content-Type: application/json' -d "{\"action\":\"role\",\"role\":\"admin\"}")
+check "promote PENDING member (400)" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X PATCH "$BASE/groups/$PUBGID/members/$UID2" -H 'Content-Type: application/json' -d "{\"action\":\"role\",\"role\":\"admin\"}")
+check "admin promote member" 200 "$S"
+# U3 masih pending di PRIVGID — kick/reject supaya cleanup bersih
+curl -s -o /dev/null -H "Cookie: $USR" -X PATCH "$BASE/groups/$PRIVGID/members/$UID3" -H 'Content-Type: application/json' -d '{"action":"reject"}' 2>/dev/null
+# Cleanup group + post-nya
+curl -s -o /dev/null -H "Cookie: $USR" -X DELETE "$BASE/groups/$PUBGID"
+curl -s -o /dev/null -H "Cookie: $USR" -X DELETE "$BASE/groups/$PRIVGID"
+curl -s -o /dev/null -H "Cookie: $USR" -X DELETE "$BASE/groups/$DUPGID"
+curl -s -o /dev/null -H "Cookie: $USR" -X DELETE "$BASE/posts" -H 'Content-Type: application/json' -d "{\"post_id\":\"$PGRPID\"}"
+
 echo "== Cleanup akun test =="
 curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\"}"
 curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID2\"}"
+curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID3\"}"
 curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/badges" -H 'Content-Type: application/json' -d "{\"badge_id\":\"$BID\"}"
 curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/badges" -H 'Content-Type: application/json' -d "{\"badge_id\":\"$OID\"}"
 curl -s -o /dev/null -H "Cookie: $ADM" -X DELETE "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"effect_id\":\"$NID\"}"

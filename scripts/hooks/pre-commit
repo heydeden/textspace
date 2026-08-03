@@ -34,7 +34,7 @@ echo "[pre-commit] tsc OK"
 
 # 3. Unit
 echo "[pre-commit] unit..."
-npm test --silent > /tmp/opencode/precommit-unit.log 2>&1 || { echo "[pre-commit] FAIL: unit test"; tail -20 /tmp/opencode/precommit-unit.log; exit 1; }
+npm test --silent > /tmp/claude/precommit-unit.log 2>&1 || { echo "[pre-commit] FAIL: unit test"; tail -20 /tmp/claude/precommit-unit.log; exit 1; }
 echo "[pre-commit] unit OK"
 
 # 4. Sweep akun test (read-only; DB error = SKIP)

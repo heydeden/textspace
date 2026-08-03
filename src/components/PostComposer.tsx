@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function PostComposer() {
   const [open, setOpen] = useState(false);
@@ -7,6 +8,9 @@ export default function PostComposer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(false);
+
+  // Jika URL ada di halaman grup → post masuk ke grup itu.
+  const groupId = usePathname().match(/^\/groups\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/)?.[1];
 
   useEffect(() => {
     const openHandler = () => { setError(''); setOpen(true); };
@@ -28,7 +32,7 @@ export default function PostComposer() {
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, ...(groupId ? { group_id: groupId } : {}) }),
       });
       const d = await res.json();
       if (res.ok) {

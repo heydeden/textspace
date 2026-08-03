@@ -10,3 +10,5 @@ tsconfig.tsbuildinfo
 test-results/
 playwright-report/
 docs/gate-evidence/
+.vercel
+.env*

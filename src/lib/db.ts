@@ -117,6 +117,27 @@ export async function initDB() {
     created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
+  await db`CREATE TABLE IF NOT EXISTS groups (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(40) NOT NULL,
+    slug VARCHAR(40) UNIQUE NOT NULL,
+    description TEXT DEFAULT '',
+    privacy VARCHAR(10) DEFAULT 'public',
+    created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
+  await db`CREATE TABLE IF NOT EXISTS group_members (
+    group_id UUID REFERENCES groups(id) ON DELETE CASCADE NOT NULL,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+    role VARCHAR(10) DEFAULT 'user',
+    status VARCHAR(10) DEFAULT 'active',
+    joined_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (group_id, user_id)
+  )`;
+  await db`ALTER TABLE posts ADD COLUMN IF NOT EXISTS group_id UUID REFERENCES groups(id) ON DELETE CASCADE DEFAULT NULL`;
+  await db`CREATE INDEX IF NOT EXISTS idx_posts_group ON posts(group_id, created_at DESC)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_group_members_group ON group_members(group_id)`;
+  await db`CREATE INDEX IF NOT EXISTS idx_group_members_user ON group_members(user_id)`;
   await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS read BOOLEAN DEFAULT false`;
   await db`ALTER TABLE user_badges ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT NULL`;
   await db`CREATE INDEX IF NOT EXISTS idx_user_badges_expires ON user_badges(expires_at)`;

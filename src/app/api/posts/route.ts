@@ -7,7 +7,28 @@ export const GET = withUser(async (req, user) => {
   const username = url.searchParams.get('username');
   const feed = url.searchParams.get('feed');
   const id = url.searchParams.get('id');
+  const group_id = url.searchParams.get('group_id');
   if (id && !isUUID(id)) return err('Invalid post id');
+  if (group_id && !isUUID(group_id)) return err('Invalid group_id');
+
+  // Privat group: hanya anggota aktif yang bisa baca feed-nya.
+  if (group_id) {
+    const g = await query(`SELECT privacy FROM groups WHERE id = $1`, [group_id]);
+    if (g.length === 0) return err('Group not found', 404);
+    if (g[0].privacy === 'private') {
+      const mem = await query(`SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'active'`, [group_id, user.id]);
+      if (mem.length === 0) return err('Private group', 403);
+    }
+  }
+
+  // Permalink post dalam grup privat: hanya anggota aktif yang boleh lihat.
+  if (id && !group_id) {
+    const pg = await query(`SELECT g.privacy, p.group_id FROM posts p LEFT JOIN groups g ON g.id = p.group_id WHERE p.id = $1`, [id]);
+    if (pg.length > 0 && pg[0].group_id && pg[0].privacy === 'private') {
+      const mem = await query(`SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'active'`, [pg[0].group_id, user.id]);
+      if (mem.length === 0) return err('Private group', 403);
+    }
+  }
 
   let sqlStr = `
     SELECT p.id, p.content, p.created_at,
@@ -38,6 +59,16 @@ export const GET = withUser(async (req, user) => {
     params.push(id);
   }
 
+  if (group_id) {
+    // Feed grup: hanya post milik grup tsb. Privat → harus anggota aktif.
+    conditions.push(`p.group_id = $${params.length + 1}`);
+    params.push(group_id);
+  } else if (!id) {
+    // Feed global/profile/following: kecualikan post dalam grup (hanya tampil di grup).
+    conditions.push(`p.group_id IS NULL`);
+  }
+  // id lookup (permalink): tanpa batasan grup — tapi cek privacy privat di bawah.
+
   conditions.push(`NOT EXISTS (SELECT 1 FROM blocks WHERE (blocker_id = $${params.length + 1} AND blocked_id = p.user_id) OR (blocker_id = p.user_id AND blocked_id = $${params.length + 1}))`);
   params.push(user.id);
 
@@ -53,12 +84,19 @@ export const GET = withUser(async (req, user) => {
 });
 
 export const POST = withUser(async (req, user) => {
-  const { content } = await req.json();
+  const { content, group_id } = await req.json();
   if (!content || content.trim().length === 0) return err('Content required');
   if (content.length > 280) return err('Max 280 characters');
+  if (group_id && !isUUID(group_id)) return err('Invalid group_id');
+
+  if (group_id) {
+    // Harus anggota aktif grup untuk post ke dalam grup.
+    const mem = await sql`SELECT status FROM group_members WHERE group_id = ${group_id} AND user_id = ${user.id}`;
+    if (mem.length === 0 || mem[0].status !== 'active') return err('Not a group member', 403);
+  }
 
   const rows = await sql`
-    INSERT INTO posts (user_id, content) VALUES (${user.id}, ${content})
+    INSERT INTO posts (user_id, content, group_id) VALUES (${user.id}, ${content}, ${group_id ?? null})
     RETURNING id, content, created_at
   `;
 
@@ -91,9 +129,16 @@ export const DELETE = withUser(async (req, user) => {
   if (!post_id) return err('post_id required');
   if (!isUUID(post_id)) return err('Invalid post_id');
 
-  const post = await sql`SELECT user_id FROM posts WHERE id = ${post_id}`;
+  const post = await sql`SELECT user_id, group_id FROM posts WHERE id = ${post_id}`;
   if (post.length === 0) return err('Post not found', 404);
-  if (post[0].user_id !== user.id) return err('Not your post', 403);
+
+  let canDelete = post[0].user_id === user.id;
+  if (!canDelete && post[0].group_id) {
+    // Admin grup boleh hapus post anggota di grupnya.
+    const mem = await sql`SELECT role FROM group_members WHERE group_id = ${post[0].group_id} AND user_id = ${user.id} AND status = 'active'`;
+    if (mem.length > 0 && mem[0].role === 'admin') canDelete = true;
+  }
+  if (!canDelete) return err('Not your post', 403);
 
   await sql`DELETE FROM posts WHERE id = ${post_id}`;
 

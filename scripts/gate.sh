@@ -30,9 +30,9 @@ fail() { log "FAIL: $*"; FAIL=1; FAILED_STEPS="${FAILED_STEPS} $1"; }
 step() {
   log "== STEP: $1 =="
   shift
-  "$@" > /tmp/opencode/gate-step.log 2>&1
+  "$@" > /tmp/claude/gate-step.log 2>&1
   local rc=$?
-  tail -8 /tmp/opencode/gate-step.log
+  tail -8 /tmp/claude/gate-step.log
   if [ "$rc" = "0" ]; then
     log "OK: $1"
   else
@@ -78,7 +78,7 @@ step "test:api" npm run test:api
 SERVER_STARTED=0
 if ! curl -s -m 3 http://127.0.0.1:3001/api/health >/dev/null 2>&1; then
   log "dev server :3001 belum jalan — start..."
-  setsid npx next dev -p 3001 -H 127.0.0.1 > /tmp/opencode/gate-dev3001.log 2>&1 < /dev/null &
+  setsid npx next dev -p 3001 -H 127.0.0.1 > /tmp/claude/gate-dev3001.log 2>&1 < /dev/null &
   GATE_SERVER_PID=$!
   SERVER_STARTED=1
   for i in $(seq 1 45); do
@@ -86,7 +86,7 @@ if ! curl -s -m 3 http://127.0.0.1:3001/api/health >/dev/null 2>&1; then
     sleep 2
   done
   if ! curl -s -m 3 http://127.0.0.1:3001/api/health >/dev/null 2>&1; then
-    fail "dev server tidak bisa start (lihat /tmp/opencode/gate-dev3001.log)"
+    fail "dev server tidak bisa start (lihat /tmp/claude/gate-dev3001.log)"
   fi
 fi
 step "e2e" npm run test:e2e
