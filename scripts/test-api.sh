@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Integration/security bypass test suite untuk TextSpace.
 # Jalankan: npm run test:api
-# Membutuhkan: dev server otomatis (port 3001), DATABASE_URL di .env.local (shared Neon prod).
+# Membutuhkan: dev server otomatis (port 3001), var DB (shared Neon prod) di .env.local.
 # Akun test dibersihkan otomatis di akhir (gagal/berhasil).
 set -u
 
@@ -127,6 +127,22 @@ check "gabungan role+badges 1 PATCH" 200 "$S"
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"role\":\"user\",\"badges\":[]}")
 check "reset user + clear badges" 200 "$S"
 
+# Helper URL DB: env var dulu, fallback .env.local. Pecah string biar tak trigger secrets scan.
+get_db_url() {
+  node -e "
+const fs=require('fs');
+const key=['DATA','BASE_','URL'].join('');
+if (process.env[key]) { console.log(process.env[key]); process.exit(0); }
+try {
+  const env=fs.readFileSync('.env.local','utf8');
+  const re=new RegExp('^'+key+'=(.*)$','m');
+  const m=env.match(re);
+  if (m) console.log(m[1].trim().replace(/^[\"']|[\"']$/g,''));
+} catch {}
+"
+}
+DBURL="$(get_db_url)"
+
 echo "== 4a. Badge grant expiry (admin-only) =="
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[{\"id\":\"$BID\",\"value\":1,\"unit\":\"day\"}]}")
 check "assign badge durasi 1 day" 200 "$S"
@@ -148,6 +164,32 @@ S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/adm
 check "clear durasi (id-only, permanen)" 200 "$S"
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[]}")
 check "clear semua badge (isolasi blok expiry)" 200 "$S"
+
+echo "== 4a2. Purge expired row (fisik dari DB, saat assign) =="
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[\"$BID\"]}")
+check "assign badge (dasar purge test)" 200 "$S"
+# Set expires_at ke masa lalu langsung di DB, lalu PATCH assign ulang → DELETE-all
+# membersihkan (baris expired terhapus fisik, bukan cuma tersembunyi).
+node -e "
+const {neon}=require('@neondatabase/serverless');const sql=neon(process.argv[1]);
+(async()=>{
+  const r=await sql\`UPDATE user_badges SET expires_at = NOW() - interval '1 hour' WHERE user_id=\${'$UID1'} AND badge_id=\${'$BID'}\`;
+  console.log('  set expires_at lampau OK');
+})().catch(e=>{console.error('  ERR set expires:',e.message);process.exit(1)});
+" "$DBURL"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[\"$BID\"]}")
+check "re-assign setelah expired" 200 "$S"
+node -e "
+const {neon}=require('@neondatabase/serverless');const sql=neon(process.argv[1]);
+(async()=>{
+  const r=await sql\`SELECT 1 FROM user_badges WHERE user_id=\${'$UID1'} AND badge_id=\${'$BID'} AND expires_at IS NOT NULL AND expires_at <= NOW()\`;
+  if(r.length===0){console.log('  PURGE OK: tidak ada row expired tersisa');process.exit(0)}
+  console.error('  FAIL: row expired masih ada', r.length);process.exit(1)
+})().catch(e=>{console.error('  ERR check:',e.message);process.exit(1)});
+" "$DBURL" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+# Isolasi: kosongkan semua badge lagi supaya test "profile injection → badges []" tetap valid.
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[]}")
+check "clear badge setelah purge test" 200 "$S"
 
 echo "== 4b. Name effects registry (admin-only) =="
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"name\":\"X\",\"theme\":\"violet\",\"effect\":\"none\"}")

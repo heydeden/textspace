@@ -119,6 +119,7 @@ export async function initDB() {
   )`;
   await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS read BOOLEAN DEFAULT false`;
   await db`ALTER TABLE user_badges ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT NULL`;
+  await db`CREATE INDEX IF NOT EXISTS idx_user_badges_expires ON user_badges(expires_at)`;
   await db`ALTER TABLE profiles DROP COLUMN IF EXISTS points`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS banned BOOLEAN DEFAULT false`;
@@ -133,4 +134,6 @@ export async function initDB() {
   await db`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at DESC)`;
   await db`CREATE INDEX IF NOT EXISTS idx_messages_users ON messages(sender_id, receiver_id)`;
   await db`CREATE INDEX IF NOT EXISTS idx_reports_resolved ON reports(resolved)`;
+  // Purge grant badge yang sudah lewat — baris expired tidak numpuk di tabel.
+  await db`DELETE FROM user_badges WHERE expires_at IS NOT NULL AND expires_at <= NOW()`;
 }
