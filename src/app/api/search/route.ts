@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       `SELECT p.id, p.content, p.created_at,
         u.id as user_id, u.username, u.display_name, u.role, u.verified, u.theme, u.avatar_style, u.avatar_seed,
        (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = u.name_effect_id AND ne.active = true) as name_effect,
-       (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = u.id) as badges,
+       (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect, 'expires_at', ub.expires_at::text) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = u.id AND (ub.expires_at IS NULL OR ub.expires_at > NOW())) as badges,
         (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
         (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count,
         ${me ? `EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $1) as liked_by_me` : 'false as liked_by_me'}
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   const users = await query(
     `SELECT id, username, display_name, role, verified, avatar_style, avatar_seed, banned,
      (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = profiles.name_effect_id AND ne.active = true) as name_effect,
-     (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id) as badges
+     (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect, 'expires_at', ub.expires_at::text) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id AND (ub.expires_at IS NULL OR ub.expires_at > NOW())) as badges
      FROM profiles WHERE (username ILIKE $1 OR display_name ILIKE $1) AND banned = false
      ${me ? `AND NOT EXISTS (SELECT 1 FROM blocks WHERE (blocker_id = $2 AND blocked_id = profiles.id) OR (blocker_id = profiles.id AND blocked_id = $2))` : ''}
      ORDER BY username ASC LIMIT 20`,

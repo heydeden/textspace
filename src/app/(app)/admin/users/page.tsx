@@ -4,11 +4,14 @@ import ConfirmModal from '@/components/ConfirmModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import Badge from '@/components/Badge';
 import SmartDropdown from '@/components/SmartDropdown';
-import { formatCount } from '@/lib/format';
+import { formatCount, formatRemaining } from '@/lib/format';
 import { NAME_EFFECT_THEMES, NAME_EFFECT_FX, nameEffectClass } from '@/lib/nameEffects';
 import { PROFILE_THEMES, themeClasses, themeClassNames } from '@/lib/profileThemes';
+import { GRANT_PRESETS, closestPreset } from '@/lib/badgeGrants';
 
 type ActionType = 'role' | 'effect' | 'theme' | 'ban' | 'unban' | 'delete';
+
+type BadgeSel = { id: string; value: number; unit: string };
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
@@ -19,7 +22,7 @@ export default function AdminUsers() {
   const [message, setMessage] = useState('');
   const [action, setAction] = useState<{ type: ActionType; userId: string; username: string } | null>(null);
   const [roleInput, setRoleInput] = useState('user');
-  const [badgesInput, setBadgesInput] = useState<string[]>([]);
+  const [badgesInput, setBadgesInput] = useState<BadgeSel[]>([]);
   const [allBadges, setAllBadges] = useState<any[]>([]);
   const [allNameEffects, setAllNameEffects] = useState<any[]>([]);
   const [nameEffectIdInput, setNameEffectIdInput] = useState('');
@@ -53,7 +56,7 @@ export default function AdminUsers() {
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, role: roleInput, badges: badgesInput }),
+      body: JSON.stringify({ user_id: userId, role: roleInput, badges: badgesInput.map(b => ({ id: b.id, value: b.value, unit: b.unit })) }),
     });
     const d = await res.json();
     if (d.success) { setMessage('Role & badges updated'); loadUsers(); }
@@ -63,10 +66,15 @@ export default function AdminUsers() {
 
   function toggleBadge(id: string) {
     setBadgesInput(prev => {
-      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.some(x => x.id === id)) return prev.filter(x => x.id !== id);
       if (prev.length >= 5) { setMessage('Max 5 badges per user'); return prev; }
-      return [...prev, id];
+      return [...prev, { id, value: 0, unit: 'hour' }];
     });
+  }
+
+  function setBadgeDuration(id: string, presetKey: string) {
+    const [value, unit] = presetKey.split(':');
+    setBadgesInput(prev => prev.map(b => b.id === id ? { ...b, value: Number(value), unit } : b));
   }
 
   async function saveNameEffect(userId: string, effectId: string) {
@@ -136,7 +144,13 @@ export default function AdminUsers() {
   const openAction = (type: ActionType, u: any) => {
     if (type === 'role') {
       setRoleInput(u.role || 'user');
-      setBadgesInput((u.badges || []).map((b: any) => b.id));
+      setBadgesInput((u.badges || []).map((b: any) => {
+        if (b.expires_at) {
+          // Snap ke preset valid — round-trip Save selalu diterima parseBadgeGrants.
+          return { id: b.id, ...closestPreset(new Date(b.expires_at).getTime() - Date.now()) };
+        }
+        return { id: b.id, value: 0, unit: 'hour' };
+      }));
     }
     if (type === 'effect') setNameEffectIdInput(u.name_effect?.id || '');
     if (type === 'theme') setThemeInput(u.theme || 'default');
@@ -201,7 +215,12 @@ export default function AdminUsers() {
                         </span>
                       )}
                       {u.banned && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Banned</span>}
-                      {(u.badges || []).map((b: any) => <Badge key={b.id} badge={b} />)}
+                      {(u.badges || []).map((b: any) => (
+                        <span key={b.id} className="inline-flex items-center gap-1" title={b.expires_at ? `Expires ${new Date(b.expires_at).toLocaleString()}` : 'Permanent badge'}>
+                          <Badge badge={b} />
+                          {b.expires_at && <span className="text-[9px] text-zinc-500">{formatRemaining(b.expires_at)}</span>}
+                        </span>
+                      ))}
                     </div>
                     <p className="text-zinc-600 text-xs mt-0.5">{formatCount(u.post_count)} posts</p>
                   </div>
@@ -260,20 +279,30 @@ export default function AdminUsers() {
             ) : (
               <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
                 {allBadges.map((b: any) => {
-                  const checked = badgesInput.includes(b.id);
+                  const sel = badgesInput.find(x => x.id === b.id);
+                  const checked = !!sel;
                   return (
-                    <label key={b.id} className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 cursor-pointer transition ${checked ? 'border-blue-600 bg-blue-600/10' : 'border-zinc-800 hover:border-zinc-700'}`}>
+                    <div key={b.id} className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 transition ${checked ? 'border-blue-600 bg-blue-600/10' : 'border-zinc-800 hover:border-zinc-700'}`}>
                       <input type="checkbox" checked={checked} onChange={() => toggleBadge(b.id)} className="accent-blue-600" />
-                      <Badge badge={b} />
-                    </label>
+                      <span className="flex-1 min-w-0"><Badge badge={b} /></span>
+                      <select
+                        value={sel ? `${sel.value}:${sel.unit}` : '0:hour'}
+                        onChange={e => setBadgeDuration(b.id, e.target.value)}
+                        onClick={e => { if (!sel) toggleBadge(b.id); }}
+                        className="text-[10px] bg-zinc-950 border border-zinc-700 rounded px-1 py-0.5 text-zinc-300 outline-none"
+                      >
+                        {GRANT_PRESETS.map(p => <option key={`${p.value}:${p.unit}`} value={`${p.value}:${p.unit}`}>{p.label}</option>)}
+                      </select>
+                    </div>
                   );
                 })}
               </div>
             )}
+            <p className="text-[11px] text-zinc-600 mt-1">Pilih durasi tiap badge. Permanen = badge tanpa batas waktu.</p>
             <div className="flex items-center gap-1 mt-2 flex-wrap min-h-6">
-              {badgesInput.map(id => {
-                const b = allBadges.find((x: any) => x.id === id);
-                return b ? <Badge key={id} badge={b} /> : null;
+              {badgesInput.map(s => {
+                const b = allBadges.find((x: any) => x.id === s.id);
+                return b ? <Badge key={s.id} badge={b} /> : null;
               })}
             </div>
             <div className="flex justify-end gap-2 mt-4">

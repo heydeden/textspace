@@ -14,6 +14,12 @@ export function query(text: string, params?: any[]) {
   return getDb()(text, params || []);
 }
 
+// Transaction tunggal (HTTP) — untuk operasi atomic multi-query (mis. replace badges).
+export async function transaction(queries: ((q: any) => any) | any[]) {
+  const db = getDb();
+  return db.transaction(queries);
+}
+
 export async function initDB() {
   const db = getDb();
   await db`CREATE TABLE IF NOT EXISTS profiles (
@@ -112,6 +118,7 @@ export async function initDB() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
   await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS read BOOLEAN DEFAULT false`;
+  await db`ALTER TABLE user_badges ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT NULL`;
   await db`ALTER TABLE profiles DROP COLUMN IF EXISTS points`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`;
   await db`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS banned BOOLEAN DEFAULT false`;

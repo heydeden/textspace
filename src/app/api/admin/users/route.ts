@@ -1,8 +1,8 @@
-import { query } from '@/lib/db';
+import { query, transaction } from '@/lib/db';
 import { ok, err, isUUID } from '@/lib/api';
 import { withAdmin } from '@/lib/api';
 import { validateProfileTheme } from '@/lib/profileThemes';
-import { validateBadgeAssignments } from '@/lib/badges';
+import { parseBadgeGrants } from '@/lib/badgeGrants';
 
 export const GET = withAdmin(async (req) => {
   const url = new URL(req.url);
@@ -25,7 +25,7 @@ export const GET = withAdmin(async (req) => {
   const rows = await query(
     `SELECT id, username, display_name, bio, role, banned, verified, theme, avatar_style, created_at::text,
       (SELECT json_build_object('id', ne.id, 'name', ne.name, 'theme', ne.theme, 'effect', ne.effect) FROM name_effects ne WHERE ne.id = profiles.name_effect_id AND ne.active = true) as name_effect,
-      (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id) as badges,
+      (SELECT COALESCE(json_agg(json_build_object('id', b.id, 'name', b.name, 'theme', b.theme, 'effect', b.effect, 'expires_at', ub.expires_at::text, 'granted_at', ub.granted_at::text) ORDER BY b.name) FILTER (WHERE b.id IS NOT NULL), '[]'::json) FROM user_badges ub JOIN badges b ON b.id = ub.badge_id AND b.active = true WHERE ub.user_id = profiles.id AND (ub.expires_at IS NULL OR ub.expires_at > NOW())) as badges,
       (SELECT COUNT(*)::int FROM posts WHERE user_id = profiles.id) as post_count
      FROM profiles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
@@ -78,19 +78,19 @@ export const PATCH = withAdmin(async (req, user) => {
     params.push(t);
   }
   if (badges !== undefined) {
-    const badgeIds = validateBadgeAssignments(badges);
-    if (badgeIds === null) return err(`Invalid badges: max 5 badge ids`);
+    const grants = parseBadgeGrants(badges);
+    if (grants === null) return err('Invalid badges: max 5, format id atau {id,value,unit}');
+    const badgeIds = grants.map(g => g.id);
     const valid = await query(
       `SELECT id FROM badges WHERE id = ANY($1::uuid[]) AND active = true`,
       [badgeIds]
     );
     if (valid.length !== badgeIds.length) return err('One or more badges not found');
-    await query('DELETE FROM user_badges WHERE user_id = $1', [user_id]);
-    if (badgeIds.length > 0) {
-      for (const bid of badgeIds) {
-        await query('INSERT INTO user_badges (user_id, badge_id) VALUES ($1, $2)', [user_id, bid]);
-      }
-    }
+    // Transaction: replace badges atomic — kalau insert gagal, set lama tidak hilang.
+    await transaction((tx) => [
+      tx`DELETE FROM user_badges WHERE user_id = ${user_id}`,
+      ...grants.map(g => tx`INSERT INTO user_badges (user_id, badge_id, expires_at) VALUES (${user_id}, ${g.id}, ${g.expiresAt})`),
+    ]);
   }
 
   if (updates.length > 0) {

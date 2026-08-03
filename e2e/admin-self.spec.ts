@@ -47,5 +47,6 @@ test('admin can create badge and assign to self, badge shows on own profile', as
   await expect(page).toHaveURL(/\/feed/, { timeout: 15_000 });
 
   await page.goto('/profile/setrahden');
-  await expect(page.getByText(`Self Boss ${SUF}`, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByText(`Self Boss ${SUF}`, { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 });

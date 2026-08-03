@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCount } from './format';
+import { formatCount, formatRemaining } from './format';
 
 describe('formatCount', () => {
   it('returns string as-is for NaN input', () => {
@@ -32,5 +32,33 @@ describe('formatCount', () => {
 
   it('accepts numeric strings', () => {
     expect(formatCount('12345')).toBe('12.3k');
+  });
+});
+
+describe('formatRemaining', () => {
+  const now = new Date('2026-08-03T00:00:00.000Z');
+
+  it('null → Permanen', () => {
+    expect(formatRemaining(null, now)).toBe('Permanen');
+  });
+
+  it('minutes when < 1h', () => {
+    expect(formatRemaining('2026-08-03T00:30:00.000Z', now)).toBe('30m');
+  });
+
+  it('hours when < 24h', () => {
+    expect(formatRemaining('2026-08-03T05:00:00.000Z', now)).toBe('5h');
+  });
+
+  it('days when < 30d', () => {
+    expect(formatRemaining('2026-08-10T00:00:00.000Z', now)).toBe('7d');
+  });
+
+  it('months when >= 30 days', () => {
+    expect(formatRemaining('2026-10-01T00:00:00.000Z', now)).toBe('1mo');
+  });
+
+  it('past / expired', () => {
+    expect(formatRemaining('2026-07-01T00:00:00.000Z', now)).toBe('Expired');
   });
 });

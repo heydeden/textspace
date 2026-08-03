@@ -10,9 +10,12 @@ BASE="http://127.0.0.1:$PORT/api"
 cd "$(dirname "$0")/.."
 
 # Ambil JWT dari Set-Cookie (curl http tidak menyimpan cookie Secure)
+# XFF IP fiksi: test-api TIDAK menyentuh bucket rate-limit 'local' yang dipakai e2e
+# (separasi bucket → e2e tak kena rate-limit collision di gate berurutan).
 login() {
   local u="$1" p="$2"
   curl -s -D - -o /dev/null -X POST "$BASE/auth/login" -H 'Content-Type: application/json' \
+    -H 'x-forwarded-for: 203.0.113.201' \
     -d "{\"username\":\"$u\",\"password\":\"$p\"}" \
     | grep -i '^set-cookie:' | sed 's/^[Ss]et-[Cc]ookie: //; s/;.*//'
 }
@@ -24,7 +27,7 @@ check() { # check <label> <expected_status> <actual_status>
 }
 
 echo "== Starting dev server :$PORT =="
-setsid nohup npx next dev -p $PORT -H 127.0.0.1 > /tmp/opencode/test-api.log 2>&1 < /dev/null & disown
+setsid nohup npx next dev -p $PORT -H 127.0.0.1 > /tmp/claude/test-api.log 2>&1 < /dev/null & disown
 SERVER_PID=$!
 for i in $(seq 1 30); do
   curl -s -o /dev/null -m 5 "$BASE/health" && break
@@ -124,6 +127,28 @@ check "gabungan role+badges 1 PATCH" 200 "$S"
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"role\":\"user\",\"badges\":[]}")
 check "reset user + clear badges" 200 "$S"
 
+echo "== 4a. Badge grant expiry (admin-only) =="
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[{\"id\":\"$BID\",\"value\":1,\"unit\":\"day\"}]}")
+check "assign badge durasi 1 day" 200 "$S"
+R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; b=[x for x in (d.get('badges') or []) if x['id']=='$BID']; assert len(b)==1 and b[0].get('expires_at') is not None, b; print('  me.badges: expires_at terisi OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+R=$(curl -s -H "Cookie: $USR" "$BASE/profile?username=$U1")
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; b=[x for x in (d.get('badges') or []) if x['id']=='$BID']; assert len(b)==1 and b[0].get('expires_at') is not None, b; print('  profile.badges: durasi terlihat di read endpoint OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[{\"id\":\"$BID\",\"value\":0,\"unit\":\"day\"}]}")
+check "assign badge permanen (0)" 200 "$S"
+R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
+echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; b=[x for x in (d.get('badges') or []) if x['id']=='$BID']; assert len(b)==1 and b[0].get('expires_at') is None, b; print('  me.badges: permanen expires_at null OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[{\"id\":\"$BID\",\"value\":3,\"unit\":\"day\"}]}")
+check "assign durasi bukan preset" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[{\"id\":\"$BID\",\"value\":1,\"unit\":\"decade\"}]}")
+check "assign unit invalid" 400 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[{\"id\":\"$BID\",\"value\":1,\"unit\":\"day\"},{\"id\":\"$OID\",\"value\":7,\"unit\":\"day\"}]}")
+check "assign 2 badge durasi" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[\"$BID\",\"$OID\"]}")
+check "clear durasi (id-only, permanen)" 200 "$S"
+S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $ADM" -X PATCH "$BASE/admin/users" -H 'Content-Type: application/json' -d "{\"user_id\":\"$UID1\",\"badges\":[]}")
+check "clear semua badge (isolasi blok expiry)" 200 "$S"
+
 echo "== 4b. Name effects registry (admin-only) =="
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/admin/name-effects" -H 'Content-Type: application/json' -d "{\"name\":\"X\",\"theme\":\"violet\",\"effect\":\"none\"}")
 check "user POST admin/name-effects" 403 "$S"
@@ -187,10 +212,12 @@ check "profile PATCH + badges (diabaikan)" 200 "$S"
 R=$(curl -s -H "Cookie: $USR" "$BASE/auth/me")
 echo "$R" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; b=d.get('badges') or []; assert len(b) == 0, b; print('  me.badges setelah injection: [] OK')" && PASS=$((PASS+1)) || FAIL=$((FAIL+1))
 
-echo "== 6. Rate limit auth (10/min) =="
+echo "== 6. Rate limit auth (10/min per IP) =="
+# XFF IP konstan → satu bucket /auth/login khusus (tak terganggu call sebelumnya di window 60s).
+# 12 request IP sama > limit 10 → deterministik ≥2x 429.
 S=200; COUNT=0
 for i in $(seq 1 12); do
-  S=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/auth/login" -H 'Content-Type: application/json' -d "{\"username\":\"$U1\",\"password\":\"salah\"}")
+  S=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/auth/login" -H 'Content-Type: application/json' -H "x-forwarded-for: 203.0.113.66" -d "{\"username\":\"$U1\",\"password\":\"salah\"}")
   [ "$S" = "429" ] && COUNT=$((COUNT+1))
 done
 echo "  429 responses: $COUNT"

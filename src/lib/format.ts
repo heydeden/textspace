@@ -1,3 +1,19 @@
+// Sisa waktu sampai expires_at (ISO). null = permanen. Sudah lewat = 'Expired'.
+export function formatRemaining(expiresAt: string | null, now: Date = new Date()): string {
+  if (!expiresAt) return 'Permanen';
+  const target = new Date(expiresAt).getTime();
+  const ms = target - now.getTime();
+  if (ms <= 0) return 'Expired';
+  const min = Math.floor(ms / 60000);
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(ms / 3600000);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(ms / 86400000);
+  if (d < 30) return `${d}d`;
+  const mo = Math.floor(d / 30);
+  return `${mo}mo`;
+}
+
 export function formatCount(n: number | string): string {
   const num = Number(n);
   if (isNaN(num)) return String(n);
