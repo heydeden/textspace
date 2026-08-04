@@ -12,6 +12,18 @@
 **GATE LOKAL (sebelum commit)**: `npx tsc --noEmit` + `npm test` (~8s). Semua check cepat tanpa server/Neon.
 **GATE PENUH (test:api + e2e, butuh DB real)**: jalan otomatis di CI saat **push ke `main`** (`.github/workflows/ci.yml` job `integration`) — akun admin test di-seed lalu dihapus, tidak menyentuh `setrahden`. `db-sweep` di main juga bersihkan akun test.
 
+### Prasyarat CI (sekali-set, wajib ada di GitHub repo → Settings → Secrets)
+- `DATABASE_URL` — wajib untuk job `integration` + `db-sweep` (main-only).
+- `TEST_ADMIN_PASSWORD` — password akun admin test `ci_admin` yang di-seed CI `integration`. **Belum di-set = job integration GAGAL saat push ke main.**
+
+### Apa yang jalan di CI tiap push
+| Push ke | CI yang jalan |
+|----------|---------------|
+| PR / branch | `gate` saja (tsc, unit, secrets/console scan, npm audit, gitleaks) — TANPA DB secret |
+| `main` | `gate` + `integration` (test:api + e2e) + `db-sweep` — pakai `DATABASE_URL` + `TEST_ADMIN_PASSWORD` |
+
+Perubahan fitur → commit → push ke **branch** dulu (gate ringsan). Saat fitur siap → merge/push ke `main` → `integration` + `db-sweep` jalan penuh otomatis.
+
 ## WORKFLOW CEPAT (hemat waktu nunggu — ikuti ini, bukan gate penuh tiap edit)
 
 | Perubahan | Perintah (cepat) |
@@ -43,9 +55,9 @@ Gate: tsc OK, unit X/X, test:sec X/X, review: code-reviewer PASS, security-revie
 2. **Tanya spesifikasi MINIMAL** (2-3 pertanyaan singkat): apa yang dijual/dibeli, mata uangnya apa, halaman di mana
 3. **Tulis rencana 5 baris** + daftar tes baru yang akan ditambah (suite AKUMULATIF — sebutkan target angka baru)
 4. **Implementasi**: pakai skill superpowers (test-driven-development, dll) + review agent setelah selesai
-5. **`bash scripts/gate.sh --save`** — wajib PASS
-6. **Rilis**: commit (baris Gate + `skills:`) → branch → push (auto-deploy) → preview smoke → merge main → prod smoke → SQL cleanup akun test
-7. Laporkan ringkas: apa yang dibuat, hasil gate, status live
+5. **Verify**: `npx tsc --noEmit` + `npm test` (wajib PASS, ~8s). Test:api/e2e TIDAK perlu manual — CI `integration` jalan saat push ke main.
+6. **Rilis**: commit (baris Gate + `skills:`) → push **branch** (gate ringsan + auto-deploy preview) → merge/push ke `main` → CI `integration` + `db-sweep` jalan penuh (test:api + e2e + cleanup akun test) → prod smoke.
+7. Laporkan ringkas: apa yang dibuat, hasil gate lokal, status CI (cek GitHub Actions — job `integration` di main)
 
 ## Rules (jangan pernah dilanggar)
 
