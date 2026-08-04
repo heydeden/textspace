@@ -27,6 +27,7 @@ check() { # check <label> <expected_status> <actual_status>
 }
 
 echo "== Starting dev server :$PORT =="
+mkdir -p /tmp/claude
 setsid nohup npx next dev -p $PORT -H 127.0.0.1 > /tmp/claude/test-api.log 2>&1 < /dev/null & disown
 SERVER_PID=$!
 for i in $(seq 1 30); do
