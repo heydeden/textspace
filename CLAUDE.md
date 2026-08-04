@@ -21,13 +21,15 @@ Full `gate.sh` = ~5-7 menit. JANGAN jalankan penuh setiap edit. Gunakan step par
 |-----------|------------------|
 | Type script | `npx tsc --noEmit` (~20s) |
 | Hanya unit / lib | `npm test` (~3s) |
-| API route | `bash scripts/test-api.sh` (~3m, butuh dev server :3001) |
+| API route / fitur baru | `npx tsc --noEmit` + `npm test` (handler-level mock, ~8s) |
+| Security API | `npm run test:sec` (route-security.test.ts, tanpa server/Neon) |
 | UI/component | `npx tsc --noEmit` + `npm test` + smoke manual |
 | Semua | `bash scripts/gate.sh --save` |
 
 **Aturan:**
 1. Edit kecil → `tsc` + `npm test` saja. Jangan sentuh test:api/e2e.
-2. **Full gate `--save` HANYA 1× di akhir** (semua fitur selesai), bukan per langkah.
+2. **Security route baru wajib masuk `src/lib/route-security.test.ts`** (baseline table-driven + logic khusus) — nambah endpoint/route tanpa tesnya = gagal konsep.
+3. **Full gate `--save` HANYA 1× di akhir** (semua fitur selesai), bukan per langkah.
 3. Bukti `docs/gate-evidence/` fresh = 30 menit. Setelah gate PASS, commit cepat — jangan re-run gate kalau tak ada perubahan (waktu terbuang).
 4. Test flaky sudah diperbaiki (rate-limit pakai XFF stabil, admin-self e2e timeout, sandbox pakai chromium alpine auto-detect di `playwright.config.ts`). Jangan "perbaiki" lagi tanpa root cause.
 5. Satu sesi besar: baca → TDD → implement → full gate → commit → rilis. Jangan jeda (konteks dingin = re-explore).
@@ -36,7 +38,7 @@ Full `gate.sh` = ~5-7 menit. JANGAN jalankan penuh setiap edit. Gunakan step par
 Commit TANPA bukti ditolak hook `commit-msg` (di `scripts/hooks/`, aktif via `bash scripts/install-hooks.sh`). Baris wajib di pesan commit:
 
 ```
-Gate: tsc OK, unit X/X, test:api X/X, e2e X/X, review: code-reviewer PASS, security-reviewer PASS, skills: <skill yang dipakai>
+Gate: tsc OK, unit X/X, test:sec X/X, test:api X/X, e2e X/X, review: code-reviewer PASS, security-reviewer PASS, skills: <skill yang dipakai>
 ```
 
 ## WORKFLOW FITUR BARU (ikuti otomatis — JANGAN menunggu disuruh langkah per langkah)
@@ -51,7 +53,7 @@ Gate: tsc OK, unit X/X, test:api X/X, e2e X/X, review: code-reviewer PASS, secur
 
 ## Rules (jangan pernah dilanggar)
 
-1. **Fitur baru = tes baru, suite AKUMULATIF** — jangan hapus tes lama; angka check wajib naik/setara (turun tanpa hapus fitur = pelanggaran)
+1. **Fitur baru = tes baru, suite AKUMULATIF** — jangan hapus tes lama; angka check wajib naik/setara (turun tanpa hapus fitur = pelanggaran). Route/endpoint baru WAJIB ditambahkan ke `src/lib/route-security.test.ts` (baseline + logic).
 2. **Review wajib sebelum commit**: pakai `/code-review` (diff) + `/security-review`, laporkan hasilnya di baris Gate
 3. **Urutan rilis**: gate PASS → commit (+baris Gate) → branch → push (auto-deploy) → preview smoke → merge → prod smoke → SQL cleanup akun test
 4. **tidak ada `console.log` di src/**, tidak ada secret di tracked files

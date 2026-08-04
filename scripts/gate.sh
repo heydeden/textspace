@@ -64,7 +64,9 @@ step "tsc" npx tsc --noEmit
 # 2. Unit test
 step "unit" npm test
 
-# 3. Integration + security bypass suite (otomatis start/kill server :3001 sendiri)
+# 3. Security (handler-level, cepat) + integration test:api (SQL/Neon real) — wajib 1× di akhir
+log "== STEP: test:sec =="
+step "test:sec" npm run test:sec
 # Bersihkan server lama dulu, tunggu port benar-benar bebas (test-api.sh pkill di akhir)
 log "== STEP: test:api =="
 pkill -f "next dev -p 3001" 2>/dev/null || true

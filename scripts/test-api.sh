@@ -271,10 +271,12 @@ if [ "$COUNT" -gt 0 ]; then PASS=$((PASS+1)); echo "  PASS rate limit memicu 429
 
 echo "== 7. Group feed + roles (semua user) =="
 USR2=$(login "$U2" "20011400")
-# U1 = creator/admin. Buat grup publik + grup privat + 1 grup untuk test invalid.
-S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"NuansaPub\",\"slug\":\"grp-$RANDOM-$RANDOM\",\"description\":\"desc\",\"privacy\":\"public\"}")
-check "create group public valid" 201 "$S"
-PUBGID=$(curl -s -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"NuansaPub\",\"slug\":\"grp-$RANDOM-$RANDOM\",\"description\":\"desc\",\"privacy\":\"public\"}" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
+# U1 = creator/admin. Buat grup publik + grup privat. Grup yang sukses (2xx)
+# disimpan ID-nya dan dibersihkan di bawah; yang gagal (400/409) tak bikin row.
+R=$(curl -s -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"NuansaPub\",\"slug\":\"grp-$RANDOM-$RANDOM\",\"description\":\"desc\",\"privacy\":\"public\"}")
+S=$(echo "$R" | python3 -c "import json,sys; print(json.load(sys.stdin).get('data',{}).get('id',''))")
+if [ -n "$S" ]; then PASS=$((PASS+1)); echo "  PASS [201] create group public valid"; else FAIL=$((FAIL+1)); echo "  FAIL create group public valid: $R"; fi
+PUBGID=$S
 PRIVGID=$(curl -s -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"NuansaPriv\",\"slug\":\"grp-$RANDOM-$RANDOM\",\"description\":\"\",\"privacy\":\"private\"}" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
 S=$(curl -s -o /dev/null -w '%{http_code}' -H "Cookie: $USR" -X POST "$BASE/groups" -H 'Content-Type: application/json' -d "{\"name\":\"\",\"slug\":\"x\",\"privacy\":\"public\"}")
 check "create group empty name" 400 "$S"
