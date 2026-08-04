@@ -13,3 +13,4 @@ docs/gate-evidence/
 .vercel
 .env*
 !.env.example
+.ci-admin-creds

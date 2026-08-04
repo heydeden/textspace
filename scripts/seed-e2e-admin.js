@@ -39,7 +39,18 @@ if (!url) {
 const sql = neon(url);
 const mode = process.argv[2];
 const username = process.env.TEST_ADMIN_USERNAME;
-const password = process.env.TEST_ADMIN_PASSWORD;
+// Password acak kalau tidak diberi (CI) — ditulis ke ADMIN_CREDS_FILE agar cleanup
+// memakai password yang sama (walau cleanup tak butuh password).
+const password = process.env.TEST_ADMIN_PASSWORD
+  || (mode === 'seed' ? Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) : '');
+const CREDS_FILE = process.env.ADMIN_CREDS_FILE || '.ci-admin-creds';
+
+function writeCreds() {
+  if (mode !== 'seed') return;
+  const fs = require('fs');
+  fs.writeFileSync(CREDS_FILE, `TEST_ADMIN_USERNAME=${username}\nTEST_ADMIN_PASSWORD=${password}\n`);
+  console.log(`[seed-e2e-admin] creds tersimpan: ${CREDS_FILE} (hapus/ignore file ini)`);
+}
 
 async function seed() {
   if (!username || !password) {
@@ -58,15 +69,25 @@ async function seed() {
     `;
   }
   console.log(`[seed-e2e-admin] seeded admin test: ${username}`);
+  writeCreds();
 }
 
 async function cleanup() {
-  if (!username) {
+  const uname = username || readCredsUsername();
+  if (!uname) {
     console.error('[seed-e2e-admin] cleanup butuh TEST_ADMIN_USERNAME');
     process.exit(1);
   }
-  await sql`DELETE FROM profiles WHERE username = ${username}`;
-  console.log(`[seed-e2e-admin] cleaned admin test: ${username}`);
+  await sql`DELETE FROM profiles WHERE username = ${uname}`;
+  console.log(`[seed-e2e-admin] cleaned admin test: ${uname}`);
+}
+
+function readCredsUsername() {
+  try {
+    const fs = require('fs');
+    const m = fs.readFileSync(CREDS_FILE, 'utf8').match(/^TEST_ADMIN_USERNAME=(.+)$/m);
+    return m ? m[1] : null;
+  } catch { return null; }
 }
 
 (async () => {

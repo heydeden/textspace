@@ -65,14 +65,15 @@ jobs:
 
   # Integration (test:api + e2e) — full gate, main-only + DB secret.
   # Kode PR tak pernah diberi DATABASE_URL (liat job gate di atas).
-  # Akun admin test unik di-seed lalu dihapus (seed-e2e-admin.js) — tidak menyentuh setrahden.
+  # Akun admin test: seed generate password acak → tulis .ci-admin-creds → test:api/e2e
+  # baca dari file itu → cleanup hapus akun + file. Tidak menyentuh setrahden.
   integration:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       TEST_ADMIN_USERNAME: ci_admin
-      TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+      ADMIN_CREDS_FILE: .ci-admin-creds
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -84,8 +85,14 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Seed akun admin test
+      - name: Seed akun admin test (password acak)
         run: node scripts/seed-e2e-admin.js seed
+
+      - name: Load creds admin test ke env
+        id: creds
+        run: |
+          echo "TEST_ADMIN_USERNAME=$(grep TEST_ADMIN_USERNAME .ci-admin-creds | cut -d= -f2)" >> "$GITHUB_ENV"
+          echo "TEST_ADMIN_PASSWORD=$(grep TEST_ADMIN_PASSWORD .ci-admin-creds | cut -d= -f2)" >> "$GITHUB_ENV"
 
       - name: test:api (SQL/Neon real)
         run: npm run test:api
@@ -107,7 +114,8 @@ jobs:
         if: always()
         run: |
           node scripts/seed-e2e-admin.js cleanup
+          rm -f .ci-admin-creds
           node scripts/sweep-test-accounts.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          TEST_ADMIN_USERNAME: ci_admin
+          ADMIN_CREDS_FILE: .ci-admin-creds
