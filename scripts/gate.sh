@@ -77,7 +77,7 @@ SECRETS=$(
     git ls-files --others --exclude-standard -z
     git diff --cached --name-only -z
   } | xargs -0 -r grep -inE "ghp_[A-Za-z0-9]{20,}|github_pat_|gho_|ghu_|ghs_|sk-[A-Za-z0-9]{20,}|sk-proj-|sk-ant-|sk_live_|vercel_token=|github_token=|jwt_secret=|database_url=|x-access-token:|vercel_automation_bypass_secret=|postgres://" 2>/dev/null \
-  | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js|seed-e2e-admin\.js)|\.github/workflows/ci\.yml|\.env\.example" || true
+  | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js|seed-e2e-admin\.js|create-admin\.js)|\.github/workflows/ci\.yml|\.env\.example" || true
 )
 if [ -n "$SECRETS" ]; then
   log "SEKRET KETEMU (file:line — nilai di-redaksi):"

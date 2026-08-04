@@ -24,7 +24,14 @@ Set di **Settings → Secrets and variables → Actions**:
 
 Alur: commit → push **branch** (CI `gate` ringan) → merge/push ke **main** → `gate` + `integration` + `db-sweep` jalan penuh.
 
-## Step 5: Akses
+## Step 5: Bikin akun admin permanen (opsional)
+Kalau butuh admin kedua (selain `setrahden`) di DB prod shared — `ENABLE_ADMIN_RECOVERY` gak jalan karena sudah ada admin. Langsung via DB:
+```
+ADMIN_USERNAME=<nama> ADMIN_PASSWORD=<password> node scripts/create-admin.js
+```
+Bikin akun baru atau upgrade akun yang ada jadi `admin`+`verified`. **Beri nilai di env shell, jangan di repo. Hapus script/rahasia setelah dipakai.**
+
+## Step 6: Akses
 https://textspace-beryl.vercel.app
 
 ## Troubleshooting
