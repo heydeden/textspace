@@ -14,13 +14,13 @@
 
 ### Prasyarat CI (sekali-set, wajib ada di GitHub repo → Settings → Secrets)
 - `DATABASE_URL` — wajib untuk job `integration` + `db-sweep` (main-only).
-- `TEST_ADMIN_PASSWORD` — password akun admin test `ci_admin` yang di-seed CI `integration`. **Belum di-set = job integration GAGAL saat push ke main.**
+- Admin test CI di-seed pakai **password acak** (`seed-e2e-admin.js` → `.ci-admin-creds` gitignored → test:api/e2e baca → cleanup hapus). TIDAK butuh secret `TEST_ADMIN_PASSWORD`.
 
 ### Apa yang jalan di CI tiap push
 | Push ke | CI yang jalan |
 |----------|---------------|
 | PR / branch | `gate` saja (tsc, unit, secrets/console scan, npm audit, gitleaks) — TANPA DB secret |
-| `main` | `gate` + `integration` (test:api + e2e) + `db-sweep` — pakai `DATABASE_URL` + `TEST_ADMIN_PASSWORD` |
+| `main` | `gate` + `integration` (test:api + e2e, akun admin acak seed+cleanup) + `db-sweep` — pakai `DATABASE_URL` |
 
 Perubahan fitur → commit → push ke **branch** dulu (gate ringsan). Saat fitur siap → merge/push ke `main` → `integration` + `db-sweep` jalan penuh otomatis.
 
@@ -59,10 +59,19 @@ Gate: tsc OK, unit X/X, test:sec X/X, review: code-reviewer PASS, security-revie
 6. **Rilis**: commit (baris Gate + `skills:`) → push **branch** (gate ringsan + auto-deploy preview) → merge/push ke `main` → CI `integration` + `db-sweep` jalan penuh (test:api + e2e + cleanup akun test) → prod smoke.
 7. Laporkan ringkas: apa yang dibuat, hasil gate lokal, status CI (cek GitHub Actions — job `integration` di main)
 
+### Checklist OTOMATIS tiap nambah fitur (jangan skip)
+Setiap fitur baru → WAJIB lengkapi 4 ini, baru commit:
+- [ ] **Route baru**: tambah baseline ke `src/lib/route-security.test.ts` (401/403/429/no-5xx) + logic khusus (ownership/membership/validasi) di describe-nya.
+- [ ] **Logic pure baru**: unit test di `src/lib/*.test.ts` (vitest, TDD dulu).
+- [ ] **Verify**: `npx tsc --noEmit` + `npm test` — semua hijau (~8s).
+- [ ] **Commit** dengan baris Gate (lihat format di atas) — `skills: <skill>` wajib.
+
+Setelah commit → push → CI handle test:api + e2e di main. **Tidak perlu** tambah test ke `test-api.sh` kecuali fitur menyentuh alur DB/Neon yang gak bisa di-mock (SQL schema, transaction, initdb).
+
 ## Rules (jangan pernah dilanggar)
 
 1. **Fitur baru = tes baru, suite AKUMULATIF** — jangan hapus tes lama; angka check wajib naik/setara (turun tanpa hapus fitur = pelanggaran). Route/endpoint baru WAJIB ditambahkan ke `src/lib/route-security.test.ts` (baseline + logic).
 2. **Review wajib sebelum commit**: pakai `/code-review` (diff) + `/security-review`, laporkan hasilnya di baris Gate
-3. **Urutan rilis**: gate PASS → commit (+baris Gate) → branch → push (auto-deploy) → preview smoke → merge → prod smoke → SQL cleanup akun test
+3. **Urutan rilis**: commit (+baris Gate) → push **branch** (gate ringsan CI) → merge/push ke **main** → CI `integration` (test:api + e2e) + `db-sweep` jalan & bersihkan akun test → prod smoke
 4. **tidak ada `console.log` di src/**, tidak ada secret di tracked files
 5. Darurat: `GATE_SKIP=1` + `[skip-gate]` + baris `Skip-reason:` di pesan (tidak disarankan, alasan wajib tertulis)
