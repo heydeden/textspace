@@ -12,3 +12,4 @@ playwright-report/
 docs/gate-evidence/
 .vercel
 .env*
+!.env.example

@@ -26,7 +26,7 @@ jobs:
         run: |
           if git ls-files -z | xargs -0 grep -inE \
             "ghp_[A-Za-z0-9]{20,}|github_pat_|gho_|ghu_|ghs_|sk-[A-Za-z0-9]{20,}|sk-proj-|sk-ant-|sk_live_|vercel_token=|github_token=|jwt_secret=|database_url=|x-access-token:|vercel_automation_bypass_secret=|postgres://" \
-            | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js|seed-e2e-admin\.js)|\.github/workflows/ci\.yml"; then
+            | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js|seed-e2e-admin\.js)|\.github/workflows/ci\.yml|\.env\.example"; then
             echo "::error::Kemungkinan secret di tracked files"
             exit 1
           fi
