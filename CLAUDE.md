@@ -7,15 +7,12 @@
 - **DB Neon SHARED** antar env: e2e/test-api yang menulis state admin (verified/badges/name_effect_id/theme) WAJIB restore state asli; akun test WAJIB dihapus.
 - **Env lokal**: `DATABASE_URL` + `JWT_SECRET` dari Vercel project `textspace` (`vercel env pull` atau `.env.local`).
 
-## GATE WAJIB sebelum commit — `bash scripts/gate.sh --save` (exit non-zero = commit DILARANG)
+## GATE WAJIB — lokal ringan, penuh di CI (main push)
 
-- Urutan: tsc → unit → test:api → e2e → secrets scan → console.log scan → sweep akun test → npm audit → gitleaks.
-- `--save` wajib: bukti tersimpan di `docs/gate-evidence/` — pre-commit MENOLAK kalau bukti tidak fresh (< 30 menit).
-- npm audit/gitleaks di lokal: network/binary tidak ada = WARN skip — **CI wajib hijau** (`.github/workflows/ci.yml`).
+**GATE LOKAL (sebelum commit)**: `npx tsc --noEmit` + `npm test` (~8s). Semua check cepat tanpa server/Neon.
+**GATE PENUH (test:api + e2e, butuh DB real)**: jalan otomatis di CI saat **push ke `main`** (`.github/workflows/ci.yml` job `integration`) — akun admin test di-seed lalu dihapus, tidak menyentuh `setrahden`. `db-sweep` di main juga bersihkan akun test.
 
-## WORKFLOW CEPAT (hemat waktu nunggu — ikuti ini, bukan full gate tiap edit)
-
-Full `gate.sh` = ~5-7 menit. JANGAN jalankan penuh setiap edit. Gunakan step parsial sesuai perubahan:
+## WORKFLOW CEPAT (hemat waktu nunggu — ikuti ini, bukan gate penuh tiap edit)
 
 | Perubahan | Perintah (cepat) |
 |-----------|------------------|
@@ -24,21 +21,20 @@ Full `gate.sh` = ~5-7 menit. JANGAN jalankan penuh setiap edit. Gunakan step par
 | API route / fitur baru | `npx tsc --noEmit` + `npm test` (handler-level mock, ~8s) |
 | Security API | `npm run test:sec` (route-security.test.ts, tanpa server/Neon) |
 | UI/component | `npx tsc --noEmit` + `npm test` + smoke manual |
-| Semua | `bash scripts/gate.sh --save` |
+| Semua (local) | `bash scripts/gate.sh` (tsc+unit+test:sec+scan — tanpa test:api/e2e) |
 
 **Aturan:**
-1. Edit kecil → `tsc` + `npm test` saja. Jangan sentuh test:api/e2e.
+1. Edit kecil → `tsc` + `npm test` saja. Jangan sentuh test:api/e2e (dijalankan CI di main push).
 2. **Security route baru wajib masuk `src/lib/route-security.test.ts`** (baseline table-driven + logic khusus) — nambah endpoint/route tanpa tesnya = gagal konsep.
-3. **Full gate `--save` HANYA 1× di akhir** (semua fitur selesai), bukan per langkah.
-3. Bukti `docs/gate-evidence/` fresh = 30 menit. Setelah gate PASS, commit cepat — jangan re-run gate kalau tak ada perubahan (waktu terbuang).
+3. **Gate penuh tidak perlu dijalankan manual di lokal** — CI `integration` jalan otomatis saat push ke main. Kalau ingin verifikasi manual: `bash scripts/test-api.sh` + `npm run test:e2e` (butuh server + DB).
 4. Test flaky sudah diperbaiki (rate-limit pakai XFF stabil, admin-self e2e timeout, sandbox pakai chromium alpine auto-detect di `playwright.config.ts`). Jangan "perbaiki" lagi tanpa root cause.
-5. Satu sesi besar: baca → TDD → implement → full gate → commit → rilis. Jangan jeda (konteks dingin = re-explore).
+5. Satu sesi besar: baca → TDD → implement → `tsc`+`npm test` → commit → push (CI integration + db-sweep jalan di main). Jangan jeda (konteks dingin = re-explore).
 6. Jangan install ulang Chromium / ulang setup sandbox — sudah bekerja (musl → `/usr/bin/chromium`).
 
 Commit TANPA bukti ditolak hook `commit-msg` (di `scripts/hooks/`, aktif via `bash scripts/install-hooks.sh`). Baris wajib di pesan commit:
 
 ```
-Gate: tsc OK, unit X/X, test:sec X/X, test:api X/X, e2e X/X, review: code-reviewer PASS, security-reviewer PASS, skills: <skill yang dipakai>
+Gate: tsc OK, unit X/X, test:sec X/X, review: code-reviewer PASS, security-reviewer PASS, skills: <skill yang dipakai> (test:api + e2e = CI main push)
 ```
 
 ## WORKFLOW FITUR BARU (ikuti otomatis — JANGAN menunggu disuruh langkah per langkah)

@@ -3,6 +3,7 @@ import { getApi, adminCookie, setBrowserSession, disposeApi } from './helpers';
 
 const SUF = Date.now().toString(36);
 const NAME = `Efx ${SUF}`;
+const ADMIN_USER = process.env.TEST_ADMIN_USERNAME || 'setrahden';
 let effectId = '';
 let bounceId = '';
 let originalEffectId: string | null = null;
@@ -63,7 +64,7 @@ test('admin-defined name effect shows as themed class combo on profile name', as
   await page.goto('/feed');
   await expect(page).toHaveURL(/\/feed/, { timeout: 15_000 });
 
-  await page.goto('/profile/setrahden');
+  await page.goto(`/profile/${ADMIN_USER}`);
   const h1 = page.locator('h1');
   await expect(h1).toHaveClass(/name-theme-cyan/, { timeout: 15_000 });
   await expect(h1).toHaveClass(/name-fx-lightning/);
@@ -82,7 +83,7 @@ test('transform effects actually animate: display inline-block + animation-name 
   expect(assign.status()).toBe(200);
 
   await setBrowserSession(context);
-  await page.goto('/profile/setrahden');
+  await page.goto(`/profile/${ADMIN_USER}`);
   const h1 = page.locator('h1');
   await expect(h1).toHaveClass(/name-fx-bounce/, { timeout: 15_000 });
 

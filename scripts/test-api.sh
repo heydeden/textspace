@@ -38,6 +38,10 @@ SUF="t$(date +%s)"
 U1="byptest1_$SUF"
 U2="byptest2_$SUF"
 
+# Admin test: env TEST_ADMIN_USERNAME/PASSWORD (CI seed akun unik), fallback setrahden lokal.
+ADMIN_USER="${TEST_ADMIN_USERNAME:-setrahden}"
+ADMIN_PASS="${TEST_ADMIN_PASSWORD:-200114}"
+
 echo "== Setup akun =="
 R=$(curl -s -X POST "$BASE/auth/register" -H 'Content-Type: application/json' \
   -d "{\"username\":\"$U1\",\"display_name\":\"Bypass One\",\"password\":\"20011400\"}")
@@ -50,7 +54,7 @@ R3=$(curl -s -X POST "$BASE/auth/register" -H 'Content-Type: application/json' \
   -d "{\"username\":\"$U3\",\"display_name\":\"Bypass Three\",\"password\":\"20011400\"}")
 UID3=$(echo "$R3" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])")
 echo "  user1=$U1 id=$UID1, user2=$U2 id=$UID2, user3=$U3 id=$UID3"
-ADM=$(login "setrahden" "200114")
+ADM=$(login "$ADMIN_USER" "$ADMIN_PASS")
 USR=$(login "$U1" "20011400")
 
 echo "== 1. Authentication =="

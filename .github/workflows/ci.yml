@@ -26,7 +26,7 @@ jobs:
         run: |
           if git ls-files -z | xargs -0 grep -inE \
             "ghp_[A-Za-z0-9]{20,}|github_pat_|gho_|ghu_|ghs_|sk-[A-Za-z0-9]{20,}|sk-proj-|sk-ant-|sk_live_|vercel_token=|github_token=|jwt_secret=|database_url=|x-access-token:|vercel_automation_bypass_secret=|postgres://" \
-            | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js)|\.github/workflows/ci\.yml"; then
+            | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js|seed-e2e-admin\.js)|\.github/workflows/ci\.yml"; then
             echo "::error::Kemungkinan secret di tracked files"
             exit 1
           fi
@@ -62,3 +62,52 @@ jobs:
         run: node scripts/sweep-test-accounts.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # Integration (test:api + e2e) — full gate, main-only + DB secret.
+  # Kode PR tak pernah diberi DATABASE_URL (liat job gate di atas).
+  # Akun admin test unik di-seed lalu dihapus (seed-e2e-admin.js) — tidak menyentuh setrahden.
+  integration:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TEST_ADMIN_USERNAME: ci_admin
+      TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Seed akun admin test
+        run: node scripts/seed-e2e-admin.js seed
+
+      - name: test:api (SQL/Neon real)
+        run: npm run test:api
+        timeout-minutes: 10
+
+      - name: Start dev server :3001
+        run: |
+          npx next dev -p 3001 -H 127.0.0.1 > /tmp/ci-dev3001.log 2>&1 &
+          for i in $(seq 1 45); do
+            curl -s -m 3 http://127.0.0.1:3001/api/health >/dev/null 2>&1 && break
+            sleep 2
+          done
+
+      - name: e2e (Playwright)
+        run: npm run test:e2e
+        timeout-minutes: 10
+
+      - name: Cleanup — hapus admin test + akun test
+        if: always()
+        run: |
+          node scripts/seed-e2e-admin.js cleanup
+          node scripts/sweep-test-accounts.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TEST_ADMIN_USERNAME: ci_admin

@@ -64,41 +64,11 @@ step "tsc" npx tsc --noEmit
 # 2. Unit test
 step "unit" npm test
 
-# 3. Security (handler-level, cepat) + integration test:api (SQL/Neon real) — wajib 1× di akhir
+# 3. Security (handler-level, cepat — tanpa server/Neon). test:api + e2e = CI (main push)
 log "== STEP: test:sec =="
 step "test:sec" npm run test:sec
-# Bersihkan server lama dulu, tunggu port benar-benar bebas (test-api.sh pkill di akhir)
-log "== STEP: test:api =="
-pkill -f "next dev -p 3001" 2>/dev/null || true
-for i in $(seq 1 20); do
-  if ! curl -s -m 2 http://127.0.0.1:3001/api/health >/dev/null 2>&1; then break; fi
-  sleep 1
-done
-step "test:api" npm run test:api
 
-# 4. E2E (butuh dev server :3001 — gate start kalau belum jalan, matikan kalau gate yang start)
-SERVER_STARTED=0
-if ! curl -s -m 3 http://127.0.0.1:3001/api/health >/dev/null 2>&1; then
-  log "dev server :3001 belum jalan — start..."
-  setsid npx next dev -p 3001 -H 127.0.0.1 > /tmp/claude/gate-dev3001.log 2>&1 < /dev/null &
-  GATE_SERVER_PID=$!
-  SERVER_STARTED=1
-  for i in $(seq 1 45); do
-    curl -s -m 3 http://127.0.0.1:3001/api/health >/dev/null 2>&1 && break
-    sleep 2
-  done
-  if ! curl -s -m 3 http://127.0.0.1:3001/api/health >/dev/null 2>&1; then
-    fail "dev server tidak bisa start (lihat /tmp/claude/gate-dev3001.log)"
-  fi
-fi
-step "e2e" npm run test:e2e
-if [ "$SERVER_STARTED" = "1" ]; then
-  log "matikan dev server yang gate start (process group $GATE_SERVER_PID)"
-  kill -- -"$GATE_SERVER_PID" 2>/dev/null || kill "$GATE_SERVER_PID" 2>/dev/null || true
-  sleep 1
-fi
-
-# 5. Secrets scan: tracked + untracked + staged, case-insensitive, nilai di-redaksi (filename:line)
+# 4. Secrets scan: tracked + untracked + staged, case-insensitive, nilai di-redaksi (filename:line)
 # Catatan: jangan simpan pola ke variabel via $(...) dengan null byte — corrupt path. Pipe langsung.
 log "== STEP: secrets scan =="
 SECRETS=$(
@@ -107,7 +77,7 @@ SECRETS=$(
     git ls-files --others --exclude-standard -z
     git diff --cached --name-only -z
   } | xargs -0 -r grep -inE "ghp_[A-Za-z0-9]{20,}|github_pat_|gho_|ghu_|ghs_|sk-[A-Za-z0-9]{20,}|sk-proj-|sk-ant-|sk_live_|vercel_token=|github_token=|jwt_secret=|database_url=|x-access-token:|vercel_automation_bypass_secret=|postgres://" 2>/dev/null \
-  | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js)|\.github/workflows/ci\.yml" || true
+  | grep -vE "=\.\.\.|scripts/(gate\.sh|install-hooks\.sh|hooks/|sweep-test-accounts\.js|seed-e2e-admin\.js)|\.github/workflows/ci\.yml" || true
 )
 if [ -n "$SECRETS" ]; then
   log "SEKRET KETEMU (file:line — nilai di-redaksi):"
@@ -117,7 +87,7 @@ else
   log "OK: secrets scan"
 fi
 
-# 6. console.log scan
+# 5. console.log scan
 log "== STEP: console.log scan =="
 CLOG=$(grep -rn "console.log" src/ 2>/dev/null | grep -v ".test.")
 if [ -n "$CLOG" ]; then
@@ -128,7 +98,7 @@ else
   log "OK: console.log scan"
 fi
 
-# 7. Sweep akun test + state admin
+# 6. Sweep akun test + state admin
 log "== STEP: sweep akun test =="
 node scripts/sweep-test-accounts.js
 if [ "$?" = "0" ]; then
@@ -137,7 +107,7 @@ else
   fail "sweep akun test"
 fi
 
-# 8. npm audit — network error = WARN skip (CI tetap wajib)
+# 7. npm audit — network error = WARN skip (CI tetap wajib)
 log "== STEP: npm audit =="
 AUDIT_OUT=$(npm audit --audit-level=high 2>&1)
 AUDIT_RC=$?
@@ -151,7 +121,7 @@ else
   fail "npm audit"
 fi
 
-# 9. Gitleaks — binary tidak ada di lokal = WARN skip (CI wajib)
+# 8. Gitleaks — binary tidak ada di lokal = WARN skip (CI wajib)
 log "== STEP: gitleaks =="
 if command -v gitleaks >/dev/null 2>&1; then
   if gitleaks detect --source . --config .gitleaks.toml --no-banner --redact 2>&1 | tail -3; then

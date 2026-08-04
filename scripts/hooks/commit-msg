@@ -36,8 +36,13 @@ check() {
 
 check "tsc (OK|PASS)"             "tsc OK/PASS"
 check "unit [0-9]+/[0-9]+"        "unit X/X (angka)"
-check "test:api [0-9]+/[0-9]+"    "test:api X/X (angka)"
-check "e2e [0-9]+/[0-9]+"         "e2e X/X (angka)"
+check "test:sec [0-9]+/[0-9]+"    "test:sec X/X (angka)"
+# test:api + e2e butuh DB real — jalan di CI (main push). Lokal wajib test:sec; angka test:api/e2e opsional.
+if echo "$GATE_LINE" | grep -qE "test:api [0-9]+/[0-9]+"; then
+  check "e2e [0-9]+/[0-9]+"       "e2e X/X (angka) — atau hapus keduanya (jalan di CI)"
+else
+  : # test:api/e2e di CI — angka boleh absen
+fi
 check "code-reviewer (PASS|FAIL|OK)"   "hasil code-reviewer"
 check "security-reviewer (PASS|FAIL|OK)" "hasil security-reviewer"
 check "skills: .+"                "skills: <skill yang dipakai>"

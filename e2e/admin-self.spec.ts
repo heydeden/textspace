@@ -3,6 +3,8 @@ import { getApi, adminCookie, disposeApi } from './helpers';
 
 const SUF = Date.now().toString(36);
 let badgeId = '';
+const ADMIN_USER = process.env.TEST_ADMIN_USERNAME || 'setrahden';
+const ADMIN_PASS = process.env.TEST_ADMIN_PASSWORD || '200114';
 
 test.beforeAll(async () => {
   const api = await getApi();
@@ -41,12 +43,12 @@ test.afterAll(async () => {
 test('admin can create badge and assign to self, badge shows on own profile', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Login', exact: true }).click();
-  await page.getByPlaceholder('Username').fill('setrahden');
-  await page.getByPlaceholder('Password').fill('200114');
+  await page.getByPlaceholder('Username').fill(ADMIN_USER);
+  await page.getByPlaceholder('Password').fill(ADMIN_PASS);
   await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page).toHaveURL(/\/feed/, { timeout: 15_000 });
 
-  await page.goto('/profile/setrahden');
+  await page.goto(`/profile/${ADMIN_USER}`);
   await page.waitForLoadState('networkidle');
   await expect(page.getByText(`Self Boss ${SUF}`, { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 });

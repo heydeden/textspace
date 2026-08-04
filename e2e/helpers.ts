@@ -12,8 +12,11 @@ export async function getApi(): Promise<APIRequestContext> {
 
 export async function adminCookie(): Promise<string> {
   if (cachedAdminCookie) return cachedAdminCookie;
+  // CI: TEST_ADMIN_USERNAME/PASSWORD (akun admin test unik). Lokal: fallback setrahden.
+  const username = process.env.TEST_ADMIN_USERNAME || 'setrahden';
+  const password = process.env.TEST_ADMIN_PASSWORD || '200114';
   const login = await (await getApi()).post('/api/auth/login', {
-    data: { username: 'setrahden', password: '200114' },
+    data: { username, password },
   });
   cachedAdminCookie = login.headers()['set-cookie']?.split(';')[0] ?? '';
   return cachedAdminCookie;
